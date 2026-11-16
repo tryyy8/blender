@@ -9,6 +9,7 @@ import os
 import sys
 import bpy
 from mathutils import Vector
+from cents_materials import material_family
 
 
 def args():
@@ -18,37 +19,40 @@ def args():
     return p.parse_args(argv)
 
 
-def mat(name, color, rough=0.75, metal=0.0):
-    m = bpy.data.materials.new(name)
-    m.diffuse_color = (*color, 1)
-    m.use_nodes = True
-    n = m.node_tree.nodes
-    links = m.node_tree.links
-    bs = n.get("Principled BSDF")
-    bs.inputs["Base Color"].default_value = (*color, 1)
-    bs.inputs["Roughness"].default_value = rough
-    bs.inputs["Metallic"].default_value = metal
-    # Fine mineral variation: restrained enough to read as a game asset, not plastic.
-    tex = n.new("ShaderNodeTexNoise")
-    tex.inputs["Scale"].default_value = 7.5
-    tex.inputs["Detail"].default_value = 3.0
-    tex.inputs["Roughness"].default_value = 0.72
-    ramp = n.new("ShaderNodeValToRGB")
-    dark = tuple(c * 0.78 for c in color) + (1,)
-    light = tuple(min(1.0, c * 1.12) for c in color) + (1,)
-    ramp.color_ramp.elements[0].position = 0.18
-    ramp.color_ramp.elements[0].color = dark
-    ramp.color_ramp.elements[1].position = 0.82
-    ramp.color_ramp.elements[1].color = light
-    bump = n.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.11
-    bump.inputs["Distance"].default_value = 0.035
-    links.new(tex.outputs["Fac"], ramp.inputs["Fac"])
-    links.new(ramp.outputs["Color"], bs.inputs["Base Color"])
-    links.new(tex.outputs["Fac"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], bs.inputs["Normal"])
-    return m
+def flat_material(name, color, rough=0.75, metal=0.0):
+    """Use a restrained, low-noise PBR response for clean glazing."""
+    material = bpy.data.materials.new(name)
+    material.diffuse_color = (*color, 1)
+    material.use_nodes = True
+    bsdf = material.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (*color, 1)
+    bsdf.inputs["Roughness"].default_value = rough
+    bsdf.inputs["Metallic"].default_value = metal
+    return material
 
+
+def mat(name, color, rough=0.75, metal=0.0):
+    """Build a surface using its own tileable material-family maps."""
+    lowered = name.lower()
+    if "glass" in lowered or "glazing" in lowered:
+        return flat_material(name, color, rough, metal)
+    if "plaster" in lowered or "lime render" in lowered:
+        family = "plaster"
+    elif "stone" in lowered or "sandstone" in lowered or "limestone" in lowered:
+        family = "stone"
+    elif "bronze" in lowered or "metal" in lowered:
+        family = "metal"
+    elif "hardwood" in lowered or "timber" in lowered or "wood" in lowered:
+        family = "wood"
+    elif "concrete" in lowered:
+        family = "concrete"
+    elif "canvas" in lowered or "fabric" in lowered:
+        family = "fabric"
+    else:
+        family = "painted"
+
+    seed = sum((index + 1) * ord(char) for index, char in enumerate(name)) % 2147483647
+    return material_family(name, family, color, rough, metal, size=384, seed=seed)
 
 def cube(name, loc, dims, material, bevel=0.025):
     bpy.ops.mesh.primitive_cube_add(size=1, location=loc)
