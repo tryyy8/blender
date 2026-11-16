@@ -27,15 +27,17 @@ jobs:
 
       - name: Generate a test GLB
         run: |
-          mkdir -p build/blender-smoke-test
-          blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/blender-smoke-test/blender-pipeline-test.glb
-          test -s build/blender-smoke-test/blender-pipeline-test.glb
-          ls -lh build/blender-smoke-test/blender-pipeline-test.glb
+          mkdir -p build/district01
+          blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/district01/pipeline-smoke-test.glb
+          blender --background --python tools/blender/district01_commercial_building.py -- --output build/district01/district01-commercial-building.glb
+          test -s build/district01/pipeline-smoke-test.glb
+          test -s build/district01/district01-commercial-building.glb
+          ls -lh build/district01/*.glb
 
       - name: Upload generated model
         uses: actions/upload-artifact@v4
         with:
-          name: blender-pipeline-smoke-test
-          path: build/blender-smoke-test/blender-pipeline-test.glb
+          name: cents-district01-building-assets
+          path: build/district01/*.glb
           if-no-files-found: error
           retention-days: 7
