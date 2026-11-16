@@ -178,7 +178,7 @@ def main():
 
     for material in list(bpy.data.materials):
         group = [obj for obj in bpy.context.scene.objects
-                 if obj.type == "MESH" and material in obj.data.materials]
+                 if obj.type == "MESH" and any(slot.name == material.name for slot in obj.data.materials)]
         if len(group) > 1:
             bpy.ops.object.select_all(action="DESELECT")
             for obj in group:
