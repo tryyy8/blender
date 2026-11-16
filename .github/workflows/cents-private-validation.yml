@@ -1,0 +1,94 @@
+name: CENTS Private Repo Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      cents_branch:
+        description: Private CENTS branch to validate
+        required: true
+        type: choice
+        options:
+          - cents-game-prototype
+          - cents-dev-bridge
+
+permissions:
+  contents: read
+
+jobs:
+  validate-game:
+    if: inputs.cents_branch == 'cents-game-prototype'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Verify private-repository token is configured
+        shell: bash
+        env:
+          CENTS_READ_TOKEN: ${{ secrets.CENTS_READ_TOKEN }}
+        run: |
+          if [[ -z "$CENTS_READ_TOKEN" ]]; then
+            echo "::error title=Missing CENTS_READ_TOKEN::Add a fine-grained token with Contents: Read-only access to tryyy8/CENTS as an Actions secret in tryyy8/blender."
+            exit 1
+          fi
+
+      - name: Check out private CENTS game source
+        uses: actions/checkout@v4
+        with:
+          repository: tryyy8/CENTS
+          ref: ${{ inputs.cents_branch }}
+          token: ${{ secrets.CENTS_READ_TOKEN }}
+          path: cents
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install game dependencies (including TypeScript 7.1 beta)
+        working-directory: cents
+        run: npm install --no-audit --no-fund
+
+      - name: Run regression tests
+        working-directory: cents
+        run: npm test
+
+      - name: Type-check game source
+        working-directory: cents
+        run: npm run typecheck
+
+      - name: Build browser game
+        working-directory: cents
+        run: npm run build
+
+  validate-bridge:
+    if: inputs.cents_branch == 'cents-dev-bridge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify private-repository token is configured
+        shell: bash
+        env:
+          CENTS_READ_TOKEN: ${{ secrets.CENTS_READ_TOKEN }}
+        run: |
+          if [[ -z "$CENTS_READ_TOKEN" ]]; then
+            echo "::error title=Missing CENTS_READ_TOKEN::Add a fine-grained token with Contents: Read-only access to tryyy8/CENTS as an Actions secret in tryyy8/blender."
+            exit 1
+          fi
+
+      - name: Check out private CENTS bridge source
+        uses: actions/checkout@v4
+        with:
+          repository: tryyy8/CENTS
+          ref: ${{ inputs.cents_branch }}
+          token: ${{ secrets.CENTS_READ_TOKEN }}
+          path: cents
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run bridge regression tests
+        working-directory: cents
+        run: npm test
