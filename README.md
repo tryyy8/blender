@@ -29,6 +29,18 @@ Create a fine-grained personal access token in GitHub with access to **only** `t
 
 Do not paste the token into source files, workflow YAML, or chat. The workflow uses it only to read the private CENTS repository.
 
+## CENTS material identity study
+
+The material pipeline includes a controlled comparison asset with six identical UV-sphere samples: stone, lime plaster, timber, brushed metal, concrete, and asphalt. Each family has separate deterministic pattern logic and exports packed base-colour, roughness, and tangent-normal maps. The reusable implementations live in `tools/blender/cents_materials.py` and are used by both the comparison study and the District 01 commercial-building generator.
+
+Generate the comparison asset locally:
+
+```bash
+blender --background --python tools/blender/cents_material_identity_study.py -- --output /tmp/cents-material-study.glb --size 384
+```
+
+The exported GLB is self-contained. A successful export validates the map/export path, not final visual approval; the materials still require comparison in the actual PlayCanvas scene under common lighting.
+
 ## Local command
 
 ```bash
