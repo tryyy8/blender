@@ -13,11 +13,11 @@ The workflow installs Blender on a GitHub-hosted Linux runner, generates a dispo
 
 The smoke-test facade is only an export-pipeline check. It is not an approved final CENTS art style or production asset.
 
-For normal assistant-operated CENTS validation, use the private CENTS Dev Bridge queue. Its Android/Termux controller accepts bounded test and build jobs and publishes result files back to GitHub, so routine validation does not require opening Actions or selecting a branch manually. The GitHub-hosted workflow below remains an optional manual runner/fallback.
+For normal assistant-operated CENTS development, use the private CENTS Dev Bridge queue. Its Android/Termux controller accepts bounded jobs and publishes results back to GitHub. If the phone-side bridge is unavailable, the assistant can trigger the public-runner fallback by updating `.github/cents-validation/request.json`; no one needs to open Actions or select a branch manually. The manual `workflow_dispatch` option remains available as a human fallback.
 
 ## Private CENTS validation (public runner)
 
-The **CENTS Private Repo Validation** workflow runs manually from this public repository and checks out the selected branch of the private `tryyy8/CENTS` repository into the temporary GitHub Actions runner. It runs tests, TypeScript type-checking, and the Vite production build for `cents-game-prototype`, or the bridge regression tests for `cents-dev-bridge`.
+The **CENTS Private Repo Validation** workflow is triggered either by a push to `.github/cents-validation/request.json` on `main`, or manually through `workflow_dispatch`. The request file contains only a request ID and an allowlisted private branch name (`cents-game-prototype` or `cents-dev-bridge`). The workflow validates that branch, checks out the selected private `tryyy8/CENTS` branch into the temporary GitHub Actions runner, and runs tests, TypeScript type-checking, and the Vite production build for the game branch, or bridge regression tests for the bridge branch. The assistant can create/update the request file to trigger a run and inspect the resulting workflow run and logs.
 
 No CENTS source is committed to this repository, no build output is published, and the private checkout is removed with the temporary runner.
 
@@ -38,3 +38,17 @@ blender --background --python tools/blender/pipeline_smoke_test.py -- --output /
 ## License and scope
 
 The scripts are generic procedural tooling. Keep game source, private design documents, credentials, and unreleased CENTS content out of this repository.
+
+
+### Assistant-triggered fallback request
+
+To trigger validation without manually using the Actions interface, create or update this public request file on `main`:
+
+```json
+{
+  "request_id": "unique-request-id",
+  "cents_branch": "cents-game-prototype"
+}
+```
+
+Only the two allowlisted private branches are accepted. The request file contains no token, CENTS source, build output, or private project data. The runner checks out the private source temporarily, runs the selected checks, and does not upload the source or build artifacts. Updating the request ID creates a new push event and a new validation run.
