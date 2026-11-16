@@ -1,6 +1,3 @@
-lmao whoever's repository this is, well you just fucked up, you shouldn't have made this shit public, this shits mine now
-# Blender Asset Generator
-
 A small, standalone repository for running headless Blender asset-generation scripts on GitHub Actions.
 
 This repository contains generic procedural Blender tooling only. It is intentionally separate from the private CENTS game repository.
