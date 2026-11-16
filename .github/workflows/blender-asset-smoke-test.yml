@@ -10,7 +10,7 @@ on:
       - tools/blender/**
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-test-asset:
@@ -33,6 +33,18 @@ jobs:
           test -s build/district01/pipeline-smoke-test.glb
           test -s build/district01/district01-commercial-building.glb
           ls -lh build/district01/*.glb
+
+      - name: Publish generated building asset
+        run: |
+          mkdir -p assets
+          cp build/district01/district01-commercial-building.glb assets/district01-commercial-building.glb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/district01-commercial-building.glb
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish District 01 commercial building asset"
+            git push
+          fi
 
       - name: Upload generated model
         uses: actions/upload-artifact@v4
