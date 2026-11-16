@@ -1,0 +1,41 @@
+name: Blender Asset Pipeline Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/blender-asset-smoke-test.yml
+      - tools/blender/**
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-asset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out asset generator
+        uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes blender
+
+      - name: Generate a test GLB
+        run: |
+          mkdir -p build/blender-smoke-test
+          blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/blender-smoke-test/blender-pipeline-test.glb
+          test -s build/blender-smoke-test/blender-pipeline-test.glb
+          ls -lh build/blender-smoke-test/blender-pipeline-test.glb
+
+      - name: Upload generated model
+        uses: actions/upload-artifact@v4
+        with:
+          name: blender-pipeline-smoke-test
+          path: build/blender-smoke-test/blender-pipeline-test.glb
+          if-no-files-found: error
+          retention-days: 7
