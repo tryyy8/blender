@@ -167,6 +167,26 @@ def main():
             cube("Side elevation window reveal", (9.08, y, z), (0.12, 1.5, 2.0), stone, 0.02)
             cube("Side elevation glazing", (9.16, y, z), (0.05, 1.2, 1.7), glass, 0.012)
 
+    # Apply bevel/normal modifiers, then merge geometry by material.
+    # This turns hundreds of tiny Blender objects into a handful of draw calls,
+    # which matters on mobile GPUs when several buildings share the scene.
+    mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
+    for obj in mesh_objects:
+        bpy.context.view_layer.objects.active = obj
+        for modifier in list(obj.modifiers):
+            bpy.ops.object.modifier_apply(modifier=modifier.name)
+
+    for material in list(bpy.data.materials):
+        group = [obj for obj in bpy.context.scene.objects
+                 if obj.type == "MESH" and material in obj.data.materials]
+        if len(group) > 1:
+            bpy.ops.object.select_all(action="DESELECT")
+            for obj in group:
+                obj.select_set(True)
+            bpy.context.view_layer.objects.active = group[0]
+            bpy.ops.object.join()
+            group[0].name = "Merged geometry - " + material.name
+
     # Origin at ground centre for predictable placement in PlayCanvas.
     bpy.ops.object.select_all(action="SELECT")
     bpy.context.view_layer.objects.active = bpy.context.selected_objects[0]
