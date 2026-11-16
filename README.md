@@ -13,6 +13,8 @@ The workflow installs Blender on a GitHub-hosted Linux runner, generates a dispo
 
 The smoke-test facade is only an export-pipeline check. It is not an approved final CENTS art style or production asset.
 
+For normal assistant-operated CENTS validation, use the private CENTS Dev Bridge queue. Its Android/Termux controller accepts bounded test and build jobs and publishes result files back to GitHub, so routine validation does not require opening Actions or selecting a branch manually. The GitHub-hosted workflow below remains an optional manual runner/fallback.
+
 ## Private CENTS validation (public runner)
 
 The **CENTS Private Repo Validation** workflow runs manually from this public repository and checks out the selected branch of the private `tryyy8/CENTS` repository into the temporary GitHub Actions runner. It runs tests, TypeScript type-checking, and the Vite production build for `cents-game-prototype`, or the bridge regression tests for `cents-dev-bridge`.
