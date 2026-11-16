@@ -225,6 +225,8 @@ GENERATORS = {
     "metal": metal_surface,
     "concrete": concrete_surface,
     "asphalt": asphalt_surface,
+    "fabric": fabric_surface,
+    "painted": painted_surface,
 }
 
 
