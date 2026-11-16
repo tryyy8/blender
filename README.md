@@ -1,3 +1,4 @@
+lmao whoever's repository this is just fucked up you shouldn't have made this shit public.
 # Blender Asset Generator
 
 A small, standalone repository for running headless Blender asset-generation scripts on GitHub Actions.
