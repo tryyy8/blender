@@ -226,8 +226,8 @@ def build_store_kit(size, output, preview):
         scene = bpy.context.scene
         scene.render.engine = "CYCLES"
         scene.cycles.device = "CPU"
-        scene.cycles.samples = 16
-        scene.cycles.use_denoising = True
+        scene.cycles.samples = 32
+        scene.cycles.use_denoising = False
         scene.render.resolution_x = 1000
         scene.render.resolution_y = 750
         scene.render.resolution_percentage = 65
