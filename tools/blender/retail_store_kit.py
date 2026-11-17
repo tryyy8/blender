@@ -198,7 +198,89 @@ def build_store_kit(size, output, preview):
     # Merchandise is built as recognizable retail forms rather than repeated
     # placeholder blocks. Two staggered depth rows fill each gondola face while
     # leaving the shelf edges and neighboring products readable.
-    package_mats = (mats["packaging_a"], mats["packaging_b"], mats["packaging_c"])
+    # A broader coordinated shelf palette gives each product family its own identity.
+    package_mats = (
+        mats["packaging_a"], mats["packaging_b"], mats["packaging_c"],
+        make_material("Packaging berry", "painted", (0.42, 0.13, 0.20), 0.48, size=size),
+        make_material("Packaging cream", "painted", (0.88, 0.77, 0.57), 0.58, size=size),
+        make_material("Packaging midnight", "painted", (0.075, 0.12, 0.16), 0.42, size=size),
+    )
+    label_ink = make_material("Packaging dark print", "painted", (0.075, 0.085, 0.075), 0.62, size=size)
+    label_light = make_material("Packaging paper print", "painted", (0.94, 0.86, 0.68), 0.72, size=size)
+    label_accent = make_material("Packaging bright print", "painted", (0.92, 0.38, 0.12), 0.52, size=size)
+
+    def bottle_mesh(name, location, material):
+        profile = ((0.070, 0.00), (0.078, 0.035), (0.080, 0.22),
+                   (0.074, 0.29), (0.050, 0.34), (0.036, 0.39),
+                   (0.036, 0.45))
+        vertices, faces = [], []
+        sides = 16
+        for radius, height in profile:
+            for side in range(sides):
+                angle = 2.0 * math.pi * side / sides
+                vertices.append((radius * math.cos(angle), radius * math.sin(angle), height))
+        for ring in range(len(profile) - 1):
+            for side in range(sides):
+                a = ring * sides + side
+                b = ring * sides + (side + 1) % sides
+                faces.append((a, b, b + sides, a + sides))
+        faces.extend([tuple(range(sides - 1, -1, -1)),
+                      tuple((len(profile) - 1) * sides + side for side in range(sides))])
+        mesh = bpy.data.meshes.new(name + " formed profile")
+        mesh.from_pydata(vertices, [], faces)
+        mesh.materials.append(material)
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.location = location
+        bevel = obj.modifiers.new("Soft molded transitions", "BEVEL")
+        bevel.width = 0.008
+        bevel.segments = 2
+        obj.modifiers.new("Bottle weighted normals", "WEIGHTED_NORMAL")
+        return obj
+
+    def pouch_mesh(name, location, material):
+        rings = ((0.00, 0.060, 0.035), (0.035, 0.085, 0.048),
+                 (0.17, 0.095, 0.052), (0.27, 0.078, 0.045),
+                 (0.30, 0.070, 0.040))
+        vertices, faces = [], [(0, 3, 2, 1)]
+        for height, half_width, half_depth in rings:
+            vertices.extend(((-half_width, -half_depth, height),
+                             (half_width, -half_depth, height),
+                             (half_width, half_depth, height),
+                             (-half_width, half_depth, height)))
+        for ring in range(len(rings) - 1):
+            for side in range(4):
+                a = ring * 4 + side
+                b = ring * 4 + (side + 1) % 4
+                faces.append((a, b, b + 4, a + 4))
+        faces.append(tuple((len(rings) - 1) * 4 + side for side in range(4)))
+        mesh = bpy.data.meshes.new(name + " flexible form")
+        mesh.from_pydata(vertices, [], faces)
+        mesh.materials.append(material)
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.location = location
+        bevel = obj.modifiers.new("Soft pouch seams", "BEVEL")
+        bevel.width = 0.012
+        bevel.segments = 2
+        obj.modifiers.new("Pouch weighted normals", "WEIGHTED_NORMAL")
+        return obj
+
+    def package_print(face_x, y, z, face, width, height):
+        add("Printed package field", (face_x, y, z), (0.014, width, height), label_light, 0.004)
+        add("Printed package color stripe",
+            (face_x + face * 0.009, y - width * 0.31, z),
+            (0.008, width * 0.16, height * 0.94), label_accent, 0.003)
+        add("Printed package header",
+            (face_x + face * 0.014, y + width * 0.17, z + height * 0.31),
+            (0.008, width * 0.48, height * 0.12), label_ink, 0.002)
+        add("Printed package footer",
+            (face_x + face * 0.014, y + width * 0.12, z - height * 0.30),
+            (0.008, width * 0.38, height * 0.055), label_ink, 0.002)
+        cylinder("Printed package emblem",
+                 (face_x + face * 0.018, y + width * 0.12, z + height * 0.02),
+                 min(width, height) * 0.16, 0.009, label_accent, 12,
+                 rotation=(0, math.pi / 2, 0))
     for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
         for row, z in enumerate((0.76, 1.45, 2.14)):
             for face in (-1, 1):
