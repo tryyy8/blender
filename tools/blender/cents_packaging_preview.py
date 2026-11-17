@@ -71,7 +71,7 @@ def main():
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
-    scene.cycles.samples = 36
+    scene.cycles.samples = 96
     scene.cycles.use_denoising = False
     scene.render.resolution_x = 1400
     scene.render.resolution_y = 900
@@ -92,7 +92,7 @@ def main():
     camera = bpy.context.object
     camera.name = "Packaging hero camera"
     camera.rotation_euler = (mathutils.Vector(target) - camera.location).to_track_quat("-Z","Y").to_euler()
-    camera.data.lens = 54
+    camera.data.lens = 40
     scene.camera = camera
 
     for name, location, energy, size in (
