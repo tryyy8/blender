@@ -106,6 +106,11 @@ def build_store_kit(size):
         parts.append(obj)
         return obj
 
+    def flush(label):
+        nonlocal parts
+        join_by_material(parts, label)
+        parts = []
+
     # Architectural shell: 16 x 12 m, 4.2 m clear interior height.
     add("Retail floor slab", (0, 0, -0.12), (16, 12, 0.24), mats["concrete"], 0.035)
     add("Rear wall", (0, 5.88, 2.1), (16, 0.24, 4.2), mats["plaster"], 0.045)
@@ -129,6 +134,7 @@ def build_store_kit(size):
     add("Storefront canopy", (0, -6.38, 3.45), (8.8, 1.15, 0.16), mats["paint"], 0.045)
     for x in (-4.1, 4.1):
         add("Canopy bracket", (x, -6.02, 3.13), (0.10, 0.74, 0.62), mats["metal"], 0.025)
+    flush("StoreShell")
 
     # Wall-mounted gondola and backwall shelves, with a restrained warm timber trim.
     for side in (-1, 1):
@@ -138,14 +144,17 @@ def build_store_kit(size):
         for y in (-4.0, 4.0):
             add("Shelf end panel", (x, y, 1.50), (0.16, 0.16, 3.0), mats["paint"], 0.025)
 
+    flush("PerimeterShelving")
+
     # Two double-sided gondolas preserve a generous central customer aisle.
-    for x in (-2.35, 2.35):
+    for gondola_index, x in enumerate((-2.35, 2.35), start=1):
         add("Gondola plinth", (x, 0.45, 0.18), (1.05, 6.8, 0.34), mats["metal"], 0.055)
         for z in (0.56, 1.25, 1.94, 2.63):
             add("Gondola shelf", (x, 0.45, z), (1.02, 6.55, 0.095), mats["wood"], 0.018)
         for y in (-2.85, 3.75):
             add("Gondola upright", (x, y, 1.58), (1.08, 0.10, 2.95), mats["metal"], 0.025)
         add("Gondola header rail", (x, 0.45, 3.12), (1.10, 6.65, 0.13), mats["paint"], 0.025)
+        flush("Gondola" + str(gondola_index))
 
     # Chilled display: dark cabinet bodies, glass doors, shelves and handles.
     for i in range(4):
@@ -155,6 +164,7 @@ def build_store_kit(size):
         add("Chiller door handle", (x + 0.28, 3.94, 1.65), (0.035, 0.045, 2.15), mats["light"], 0.012)
         for z in (0.68, 1.34, 2.0, 2.66):
             add("Chiller shelf", (x, 4.50, z), (0.72, 0.60, 0.045), mats["light"], 0.008)
+    flush("Chillers")
 
     # Checkout counter, staff-side worktop and POS hardware.
     add("Checkout cabinet", (5.55, -3.72, 0.58), (3.35, 1.30, 1.16), mats["wood"], 0.065)
@@ -173,6 +183,9 @@ def build_store_kit(size):
         x = -2.65 + (i % 3) * 0.78
         z = 0.78 + (i // 3) * 0.92
         add("Stock carton", (x, 5.18, z), (0.62, 0.58, 0.62), mats["packaging_a" if i % 3 == 0 else "packaging_b" if i % 3 == 1 else "packaging_c"], 0.025)
+    flush("Checkout")
+
+    flush("Stockroom")
 
     # Product silhouettes: deliberately varied packaging families, not text labels.
     package_mats = (mats["packaging_a"], mats["packaging_b"], mats["packaging_c"])
@@ -190,13 +203,16 @@ def build_store_kit(size):
                 else:
                     add("Snack pouch silhouette", (x, shelf_y, z + 0.13), (0.24, 0.14, 0.26), material, 0.035)
 
+    flush("ProductDisplays")
+
     # Ceiling is intentionally omitted in the kit preview; lighting fixtures establish scale.
     for x in (-4.5, 0.0, 4.5):
         add("Linear ceiling light housing", (x, 0.4, 4.05), (2.2, 0.24, 0.10), mats["metal"], 0.025)
         add("Linear ceiling diffuser", (x, 0.4, 3.985), (2.0, 0.19, 0.035), mats["light"], 0.018)
+    flush("Lighting")
 
-    # Convert material groups into fewer draw-ready meshes while preserving material slots.
-    join_by_material(parts, "RetailKit")
+    # Modules remain separate for visibility culling and future interaction. Within each
+    # module, geometry is joined by material to keep its draw-call count bounded.
     bpy.ops.object.select_all(action="SELECT")
     bpy.context.view_layer.objects.active = bpy.context.selected_objects[0]
     bpy.ops.export_scene.gltf(filepath=os.path.abspath(arguments().output),
