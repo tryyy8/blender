@@ -173,6 +173,7 @@ def build_store_kit(size):
     add("POS terminal base", (4.55, -3.68, 1.32), (0.42, 0.34, 0.18), mats["metal"], 0.025)
     add("POS display", (4.55, -3.55, 1.53), (0.38, 0.06, 0.25), mats["glass"], 0.012)
     add("Impulse display base", (6.85, -4.0, 1.30), (0.55, 0.55, 0.10), mats["metal"], 0.018)
+    flush("Checkout")
 
     # Compact backroom partition and stock shelving behind the service zone.
     add("Stockroom partition", (0, 5.0, 2.05), (4.4, 0.18, 4.1), mats["plaster"], 0.025)
@@ -183,7 +184,6 @@ def build_store_kit(size):
         x = -2.65 + (i % 3) * 0.78
         z = 0.78 + (i // 3) * 0.92
         add("Stock carton", (x, 5.18, z), (0.62, 0.58, 0.62), mats["packaging_a" if i % 3 == 0 else "packaging_b" if i % 3 == 1 else "packaging_c"], 0.025)
-    flush("Checkout")
 
     flush("Stockroom")
 
