@@ -120,6 +120,8 @@ def build_store_kit(size, output, preview):
     add("Front left pier", (-6.5, -5.88, 2.1), (2.75, 0.24, 4.2), mats["plaster"], 0.045)
     add("Front right pier", (6.5, -5.88, 2.1), (2.75, 0.24, 4.2), mats["plaster"], 0.045)
     add("Front fascia", (0, -5.88, 3.82), (10.25, 0.24, 0.76), mats["paint"], 0.035)
+    # A real ceiling closes the room and makes the interior read as a store, not a cutaway.
+    add("Interior ceiling roof", (0, 0, 4.16), (16, 12, 0.22), mats["light"], 0.035)
     add("Entrance header", (0, -5.88, 0.18), (3.2, 0.24, 0.36), mats["metal"], 0.018)
     # Storefront glazing and a pair of framed entry leaves.
     for x in (-4.55, -2.55, 2.55, 4.55):
@@ -209,7 +211,7 @@ def build_store_kit(size, output, preview):
 
     flush("ProductDisplays")
 
-    # Ceiling is intentionally omitted in the kit preview; lighting fixtures establish scale.
+    # Warm ceiling fixtures sit just below the roof plane.
     for x in (-4.5, 0.0, 4.5):
         add("Linear ceiling light housing", (x, 0.4, 4.05), (2.2, 0.24, 0.10), mats["metal"], 0.025)
         add("Linear ceiling diffuser", (x, 0.4, 3.985), (2.0, 0.19, 0.035), mats["light"], 0.018)
