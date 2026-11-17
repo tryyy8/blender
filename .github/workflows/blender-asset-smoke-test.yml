@@ -35,11 +35,12 @@ jobs:
           blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/district01/pipeline-smoke-test.glb
           blender --background --python tools/blender/district01_commercial_building.py -- --output build/district01/district01-commercial-building.glb
           blender --background --python tools/blender/cents_material_identity_study.py -- --output build/district01/cents-material-identity-study.glb --size 384
-          blender --background --python tools/blender/retail_store_kit.py -- --output build/district01/retail-store-kit.glb --texture-size 256
+          blender --background --python tools/blender/retail_store_kit.py -- --output build/district01/retail-store-kit.glb --texture-size 256 --preview build/district01/retail-store-kit-preview.png
           test -s build/district01/pipeline-smoke-test.glb
           test -s build/district01/district01-commercial-building.glb
           test -s build/district01/cents-material-identity-study.glb
           test -s build/district01/retail-store-kit.glb
+          test -s build/district01/retail-store-kit-preview.png
           ls -lh build/district01/*.glb
 
       - name: Publish generated visual assets
@@ -72,6 +73,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cents-retail-store-asset-kit
-          path: build/district01/*.glb
+          path: |
+            build/district01/*.glb
+            build/district01/retail-store-kit-preview.png
           if-no-files-found: error
           retention-days: 7
