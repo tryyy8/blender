@@ -11,7 +11,7 @@ import math
 import os
 import sys
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 if SCRIPT_DIR not in sys.path:
@@ -266,7 +266,7 @@ def build_store_kit(size, output, preview):
         obj.modifiers.new("Pouch weighted normals", "WEIGHTED_NORMAL")
         return obj
 
-    def package_print(face_x, y, z, face, width, height):
+    def package_print(face_x, y, z, face, width, height, product_name):
         add("Printed package field", (face_x, y, z), (0.014, width, height), label_light, 0.004)
         add("Printed package color stripe",
             (face_x + face * 0.009, y - width * 0.31, z),
@@ -281,6 +281,26 @@ def build_store_kit(size, output, preview):
                  (face_x + face * 0.018, y + width * 0.12, z + height * 0.02),
                  min(width, height) * 0.16, 0.009, label_accent, 12,
                  rotation=(0, math.pi / 2, 0)))
+        # Small raised print makes the packages read as designed products, not blank props.
+        font = bpy.data.curves.new("Printed " + product_name, type="FONT")
+        font.body = product_name
+        font.size = min(width * 0.48, height * 0.20)
+        font.align_x = "CENTER"
+        font.align_y = "CENTER"
+        text_obj = bpy.data.objects.new("Package typography " + product_name, font)
+        bpy.context.collection.objects.link(text_obj)
+        basis = Matrix((Vector((0, face, 0)), Vector((0, 0, 1)),
+                        Vector((face, 0, 0)))).transposed()
+        text_obj.rotation_mode = "QUATERNION"
+        text_obj.rotation_quaternion = basis.to_quaternion()
+        text_obj.location = (face_x + face * 0.026, y + width * 0.12, z + height * 0.02)
+        bpy.ops.object.select_all(action="DESELECT")
+        text_obj.select_set(True)
+        bpy.context.view_layer.objects.active = text_obj
+        bpy.ops.object.convert(target="MESH")
+        text_obj = bpy.context.object
+        text_obj.data.materials.append(label_ink)
+        parts.append(text_obj)
     for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
         for row, z in enumerate((0.76, 1.45, 2.14)):
             for face in (-1, 1):
@@ -297,7 +317,7 @@ def build_store_kit(size, output, preview):
                             parts.append(obj)
                             obj = cylinder("Bottle cap", (product_x, y, z + 0.465), 0.041, 0.030, label_accent, 12)
                             parts.append(obj)
-                            package_print(product_x + face * 0.081, y, z + 0.19, face, 0.115, 0.16)
+                            package_print(product_x + face * 0.081, y, z + 0.19, face, 0.115, 0.16, "COLA")
                         elif kind == 1:
                             # Aluminum can with rolled top and bottom rims.
                             obj = cylinder("Aluminum drink can", (product_x, y, z + 0.145), 0.073, 0.29, material, 24)
@@ -306,25 +326,25 @@ def build_store_kit(size, output, preview):
                             parts.append(obj)
                             obj = cylinder("Can bottom rim", (product_x, y, z + 0.005), 0.070, 0.010, mats["metal"], 24)
                             parts.append(obj)
-                            package_print(product_x + face * 0.074, y, z + 0.15, face, 0.105, 0.17)
+                            package_print(product_x + face * 0.074, y, z + 0.15, face, 0.105, 0.17, "FIZZ")
                         elif kind == 2:
                             # Carton with folded top gable and a deliberately designed front panel.
                             add("Gable carton body", (product_x, y, z + 0.17), (0.17, 0.17, 0.34), material, 0.018)
                             add("Carton folded top", (product_x, y, z + 0.35), (0.17, 0.17, 0.035), label_accent, 0.008)
-                            package_print(product_x + face * 0.088, y, z + 0.17, face, 0.12, 0.22)
+                            package_print(product_x + face * 0.088, y, z + 0.17, face, 0.12, 0.22, "OATS")
                         elif kind == 3:
                             # Flexible stand-up pouch with a pinched heat-sealed top.
                             obj = pouch_mesh("Stand-up snack pouch", (product_x, y, z), material)
                             parts.append(obj)
                             add("Pouch heat seal", (product_x, y, z + 0.292), (0.14, 0.018, 0.018), label_light, 0.004)
-                            package_print(product_x + face * 0.096, y, z + 0.15, face, 0.13, 0.19)
+                            package_print(product_x + face * 0.096, y, z + 0.15, face, 0.13, 0.19, "CHIPS")
                         else:
                             # Convenience-food tub with a raised lid and printed wrap.
                             obj = cylinder("Food tub", (product_x, y, z + 0.105), 0.085, 0.21, material, 24)
                             parts.append(obj)
                             obj = cylinder("Food tub lid", (product_x, y, z + 0.218), 0.087, 0.025, label_light, 24)
                             parts.append(obj)
-                            package_print(product_x + face * 0.086, y, z + 0.11, face, 0.12, 0.12)
+                            package_print(product_x + face * 0.086, y, z + 0.11, face, 0.12, 0.12, "DELI")
 
     flush("ProductDisplays")
 
