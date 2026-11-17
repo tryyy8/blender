@@ -72,7 +72,7 @@ def main():
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
     scene.cycles.samples = 36
-    scene.cycles.use_denoising = True
+    scene.cycles.use_denoising = False
     scene.render.resolution_x = 1400
     scene.render.resolution_y = 900
     scene.render.resolution_percentage = 100
