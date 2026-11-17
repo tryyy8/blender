@@ -140,13 +140,23 @@ def build_store_kit(size, output, preview):
         add("Canopy bracket", (x, -6.02, 3.13), (0.10, 0.74, 0.62), mats["metal"], 0.025)
     flush("StoreShell")
 
-    # Wall-mounted gondola and backwall shelves, with a restrained warm timber trim.
+    # Wall-mounted shelving stops before the rear-left refrigeration bank.
+    # The former full-length left run overlapped the refrigerator cabinets.
     for side in (-1, 1):
         x = side * 6.55
+        if side < 0:
+            shelf_center_y, shelf_length, end_y = -0.35, 7.35, 3.325
+        else:
+            shelf_center_y, shelf_length, end_y = 0.0, 8.6, 4.0
         for z in (0.42, 1.18, 1.94, 2.70):
-            add("Perimeter shelf", (x, 0.0, z), (0.92, 8.6, 0.10), mats["wood"], 0.022)
-        for y in (-4.0, 4.0):
+            add("Perimeter shelf", (x, shelf_center_y, z), (0.92, shelf_length, 0.10), mats["wood"], 0.022)
+            add("Perimeter shelf front nosing", (x, shelf_center_y - shelf_length * 0.5, z + 0.015),
+                (0.96, 0.055, 0.13), mats["paint"], 0.018)
+        for y in (-4.0, end_y):
             add("Shelf end panel", (x, y, 1.50), (0.16, 0.16, 3.0), mats["paint"], 0.025)
+        for z in (0.55, 1.31, 2.07, 2.83):
+            add("Shelf upright bracket", (x - side * 0.36, shelf_center_y, z),
+                (0.12, shelf_length - 0.20, 0.045), mats["metal"], 0.012)
 
     flush("PerimeterShelving")
 
@@ -165,23 +175,86 @@ def build_store_kit(size, output, preview):
         add("Gondola header rail", (x, 0.45, 3.12), (1.10, 6.65, 0.13), mats["paint"], 0.025)
         flush("Gondola" + str(gondola_index))
 
-    # Chilled display: dark cabinet bodies, glass doors, shelves and handles.
+    # Four authored upright beverage coolers. Each cabinet has a layered carcass,
+    # recessed lit interior, gasketed door frame, hardware and formed shelf supports.
+    fridge_interior = make_material("Cooler interior enamel", "painted", (0.30, 0.39, 0.37), 0.48, size=size)
+    fridge_trim = make_material("Cooler brushed stainless trim", "metal", (0.39, 0.44, 0.42), 0.30, 0.68, size)
+    fridge_gasket = make_material("Cooler charcoal door gasket", "painted", (0.035, 0.052, 0.050), 0.78, size=size)
+    fridge_glass = make_glass("Cooler blue-green insulated door glass", (0.34, 0.49, 0.48), 0.20, 0.04)
     for i in range(4):
-        x = -5.85 + i * 0.92
-        add("Chiller cabinet", (x, 4.65, 1.55), (0.86, 1.25, 3.05), mats["metal"], 0.055)
-        add("Chiller glass door", (x, 3.99, 1.65), (0.72, 0.055, 2.65), mats["glass"], 0.018)
-        add("Chiller door handle", (x + 0.28, 3.94, 1.65), (0.035, 0.045, 2.15), mats["light"], 0.012)
-        for z in (0.68, 1.34, 2.0, 2.66):
-            add("Chiller shelf", (x, 4.50, z), (0.72, 0.60, 0.045), mats["light"], 0.008)
+        x = -5.70 + i * 0.94
+        # Insulated cabinet body and projecting service plinth.
+        add("Cooler insulated carcass", (x, 4.68, 1.56), (0.88, 1.26, 3.08), mats["metal"], 0.075)
+        add("Cooler toe kick", (x, 4.015, 0.18), (0.82, 0.16, 0.28), fridge_gasket, 0.035)
+        add("Cooler crown cap", (x, 4.66, 3.15), (0.91, 1.30, 0.13), fridge_trim, 0.035)
+        add("Cooler inner liner", (x, 4.015, 1.68), (0.73, 0.055, 2.54), fridge_interior, 0.012)
+        add("Cooler rear insulation panel", (x, 5.255, 1.65), (0.76, 0.07, 2.78), fridge_interior, 0.018)
+        # Door assembly: dark continuous gasket, stainless frame and tinted glazing.
+        add("Cooler magnetic door gasket", (x, 3.997, 1.66), (0.80, 0.075, 2.76), fridge_gasket, 0.045)
+        add("Cooler glass door", (x, 3.945, 1.66), (0.735, 0.035, 2.68), fridge_glass, 0.028)
+        for edge_x in (-0.382, 0.382):
+            add("Cooler door stile", (x + edge_x, 3.915, 1.66), (0.045, 0.075, 2.75), fridge_trim, 0.018)
+        for edge_z in (0.285, 3.035):
+            add("Cooler door rail", (x, 3.915, edge_z), (0.78, 0.075, 0.055), fridge_trim, 0.018)
+        # Full-height pull handle, hinge barrels and subtle brand plaque.
+        add("Cooler vertical pull handle", (x + 0.285, 3.865, 1.72), (0.045, 0.075, 1.62), mats["light"], 0.020)
+        for hinge_z in (0.52, 1.62, 2.76):
+            add("Cooler hinge barrel", (x - 0.385, 3.96, hinge_z), (0.07, 0.10, 0.19), fridge_trim, 0.025)
+        add("Cooler top identity plaque", (x, 3.902, 2.94), (0.36, 0.018, 0.10), mats["paint"], 0.018)
+        # Shelves sit inside the cabinet, with front lips and side support pins.
+        for shelf_z in (0.66, 1.30, 1.94, 2.58):
+            add("Cooler interior shelf", (x, 4.48, shelf_z), (0.69, 0.58, 0.035), fridge_trim, 0.010)
+            add("Cooler shelf front lip", (x, 4.185, shelf_z + 0.025), (0.69, 0.035, 0.055), mats["light"], 0.012)
+            for support_x in (-0.33, 0.33):
+                add("Cooler shelf support", (x + support_x, 4.47, shelf_z - 0.045), (0.025, 0.58, 0.07), fridge_trim, 0.008)
+        # Vertical cold-white light channels inside each door reveal.
+        for light_x in (-0.335, 0.335):
+            add("Cooler LED channel", (x + light_x, 4.035, 1.70), (0.022, 0.035, 2.40), mats["light"], 0.010)
     flush("Chillers")
 
-    # Checkout counter, staff-side worktop and POS hardware.
-    add("Checkout cabinet", (5.55, -3.72, 0.58), (3.35, 1.30, 1.16), mats["wood"], 0.065)
-    add("Checkout worktop", (5.55, -3.72, 1.20), (3.55, 1.42, 0.12), mats["light"], 0.035)
-    add("Checkout accent fascia", (5.55, -3.04, 0.57), (3.10, 0.045, 0.70), mats["paint"], 0.025)
-    add("POS terminal base", (4.55, -3.68, 1.32), (0.42, 0.34, 0.18), mats["metal"], 0.025)
-    add("POS display", (4.55, -3.55, 1.53), (0.38, 0.06, 0.25), mats["glass"], 0.012)
-    add("Impulse display base", (6.85, -4.0, 1.30), (0.55, 0.55, 0.10), mats["metal"], 0.018)
+    # Designed checkout island: laminated counter, inset conveyor/scanner zone,
+    # cashier-side drawer stack, customer-facing fascia and articulated POS hardware.
+    counter_top = make_material("Checkout warm quartz laminate", "concrete", (0.66, 0.58, 0.45), 0.34, size=size)
+    rubber = make_material("Checkout belt rubber", "painted", (0.045, 0.055, 0.052), 0.84, size=size)
+    screen = make_glass("Checkout display glass", (0.055, 0.105, 0.11), 0.18, 0.18)
+    add("Checkout sculpted cabinet", (5.55, -3.72, 0.58), (3.35, 1.30, 1.16), mats["wood"], 0.095)
+    add("Checkout toe plinth", (5.55, -3.72, 0.105), (3.18, 1.18, 0.16), mats["metal"], 0.045)
+    add("Checkout worktop slab", (5.55, -3.72, 1.205), (3.62, 1.48, 0.15), counter_top, 0.060)
+    add("Checkout customer fascia", (5.55, -2.995, 0.58), (3.05, 0.055, 0.72), mats["paint"], 0.035)
+    add("Checkout fascia brass reveal", (5.55, -2.958, 0.90), (2.84, 0.025, 0.035), mats["light"], 0.012)
+    # Conveyor belt and raised end stops.
+    add("Checkout conveyor belt", (5.00, -3.72, 1.292), (1.16, 0.94, 0.025), rubber, 0.018)
+    for x in (4.40, 5.60):
+        add("Conveyor end stop", (x, -3.72, 1.325), (0.045, 0.98, 0.055), fridge_trim, 0.012)
+    # Recessed scanner glass with a metal surround and a distinct scan window.
+    add("Barcode scanner surround", (6.02, -3.72, 1.292), (0.44, 0.46, 0.055), mats["metal"], 0.025)
+    add("Barcode scanner glass", (6.02, -3.72, 1.322), (0.32, 0.34, 0.012), screen, 0.012)
+    # Cash drawer, lock cylinder and handle are on the cashier side.
+    add("Cash drawer face", (5.70, -4.365, 0.78), (1.15, 0.045, 0.25), fridge_trim, 0.022)
+    add("Cash drawer pull", (5.70, -4.395, 0.79), (0.32, 0.035, 0.055), mats["metal"], 0.018)
+    cylinder("Cash drawer lock", (6.22, -4.405, 0.79), 0.028, 0.018, mats["light"], vertices=24, rotation=(math.pi/2,0,0))
+    # Main till display with a sculpted stand and a tilted, framed screen.
+    add("POS swivel pedestal", (4.55, -3.66, 1.40), (0.20, 0.22, 0.20), mats["metal"], 0.035)
+    add("POS neck", (4.55, -3.66, 1.54), (0.09, 0.10, 0.22), mats["metal"], 0.025)
+    add("POS monitor housing", (4.55, -3.61, 1.72), (0.52, 0.13, 0.40), mats["metal"], 0.045)
+    add("POS active display", (4.55, -3.535, 1.73), (0.43, 0.018, 0.30), screen, 0.022)
+    add("POS lower bezel", (4.55, -3.52, 1.515), (0.52, 0.035, 0.045), mats["metal"], 0.012)
+    # Separate keypad and card reader, angled toward the customer.
+    add("POS keypad body", (4.95, -3.40, 1.39), (0.32, 0.27, 0.075), mats["metal"], 0.025)
+    for row in range(3):
+        for col in range(3):
+            add("POS tactile key", (4.84 + col * 0.105, -3.48 + row * 0.075, 1.435),
+                (0.065, 0.045, 0.018), mats["light"] if (row + col) % 3 else mats["paint"], 0.009)
+    add("Contactless card reader", (6.65, -3.43, 1.40), (0.30, 0.24, 0.12), mats["metal"], 0.025)
+    add("Card reader screen", (6.65, -3.39, 1.47), (0.20, 0.012, 0.065), screen, 0.008)
+    add("Receipt printer housing", (4.95, -3.90, 1.36), (0.34, 0.26, 0.12), fridge_trim, 0.025)
+    add("Receipt output slot", (4.95, -4.035, 1.39), (0.19, 0.012, 0.018), rubber, 0.004)
+    # Bagging platform and a compact queue-side impulse tray.
+    add("Bagging platform", (6.60, -4.05, 1.30), (0.70, 0.58, 0.055), counter_top, 0.025)
+    add("Impulse display base", (6.90, -3.52, 1.31), (0.42, 0.48, 0.08), mats["metal"], 0.020)
+    for item in range(3):
+        add("Checkout impulse product plinth", (6.75 + item * 0.15, -3.52, 1.39),
+            (0.11, 0.20, 0.12), mats["packaging_a" if item == 0 else "packaging_b" if item == 1 else "packaging_c"], 0.018)
     flush("Checkout")
 
     # Compact backroom partition and stock shelving behind the service zone.
@@ -189,10 +262,8 @@ def build_store_kit(size, output, preview):
     add("Stockroom opening lintel", (0, 4.84, 3.65), (1.65, 0.20, 0.28), mats["paint"], 0.018)
     for z in (0.48, 1.35, 2.22, 3.09):
         add("Stockroom shelf", (-1.7, 5.42, z), (2.6, 0.70, 0.09), mats["wood"], 0.018)
-    for i in range(6):
-        x = -2.65 + (i % 3) * 0.78
-        z = 0.78 + (i // 3) * 0.92
-        add("Stock carton", (x, 5.18, z), (0.62, 0.58, 0.62), mats["packaging_a" if i % 3 == 0 else "packaging_b" if i % 3 == 1 else "packaging_c"], 0.025)
+    # Keep the initial backroom clear until inventory cartons are authored as
+    # their own UV-mapped asset family; no coloured placeholder cubes are emitted.
 
     flush("Stockroom")
 
@@ -204,10 +275,20 @@ def build_store_kit(size, output, preview):
     parts.extend(chilled_objects)
     flush("ChillerMerchandise")
 
-    # Warm ceiling fixtures sit just below the roof plane.
+    # Recessed linear LED troffers: stepped trim, deep shadow reveal, diffuser,
+    # end caps and subtle fasteners. The fixture sits just below the ceiling plane.
+    light_trim = make_material("Recessed light satin aluminum", "metal", (0.31, 0.35, 0.33), 0.29, 0.62, size)
+    light_reveal = make_material("Recessed light dark reveal", "painted", (0.045, 0.055, 0.052), 0.68, size=size)
     for x in (-4.5, 0.0, 4.5):
-        add("Linear ceiling light housing", (x, 0.4, 4.05), (2.2, 0.24, 0.10), mats["metal"], 0.025)
-        add("Linear ceiling diffuser", (x, 0.4, 3.985), (2.0, 0.19, 0.035), mats["light"], 0.018)
+        add("LED troffer recessed housing", (x, 0.4, 4.035), (2.38, 0.34, 0.085), light_reveal, 0.055)
+        add("LED troffer perimeter bezel", (x, 0.4, 3.984), (2.27, 0.29, 0.035), light_trim, 0.038)
+        add("LED opal diffuser lens", (x, 0.4, 3.960), (2.13, 0.245, 0.018), mats["light"], 0.028)
+        for end_x in (-1.11, 1.11):
+            add("LED troffer end cap", (x + end_x, 0.4, 3.963), (0.035, 0.25, 0.028), light_trim, 0.010)
+        for fastener_x in (-0.98, 0.98):
+            for fastener_y in (-0.105, 0.105):
+                cylinder("LED troffer captive fastener", (x + fastener_x, 0.4 + fastener_y, 3.941),
+                    0.009, 0.006, mats["metal"], vertices=12)
     flush("Lighting")
 
     # Modules remain separate for visibility culling and future interaction. Within each
