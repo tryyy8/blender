@@ -41,6 +41,14 @@ blender --background --python tools/blender/cents_material_identity_study.py -- 
 
 The exported GLB is self-contained. A successful export validates the map/export path, not final visual approval; the materials still require comparison in the actual PlayCanvas scene under common lighting.
 
+Generate the reusable modular retail-store asset study locally:
+
+```bash
+blender --background --python tools/blender/retail_store_kit.py -- --output /tmp/retail-store-kit.glb --texture-size 256
+```
+
+The kit keeps the shell, perimeter shelving, gondolas, chillers, checkout, stockroom, product displays, and lighting as separate modules, joining geometry by material within each module. It is generic pipeline tooling; game-specific branding and design stay in the private CENTS repository.
+
 ## Local command
 
 ```bash
