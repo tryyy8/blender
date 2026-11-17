@@ -468,44 +468,6 @@ def _deli_tub(origin, angle, scale, art, lid, cup, parts):
     _bevel_box("Deli lid pull tab", (0.024, 0.020, 0.006), (0.055, 0, 0.210), lid, angle, scale, parts, 0.004, product_origin=origin)
 
 
-def _place_instanced(cache, key, builder, origin, angle, scale, parts, *args, **kwargs):
-    templates = cache.get(key)
-    first_instance = templates is None
-    if first_instance:
-        prototypes = []
-        builder((0.0, 0.0, 0.0), 0.0, 1.0, *args, prototypes, **kwargs)
-        templates = [
-            (obj, tuple(obj.location), tuple(obj.rotation_euler))
-            for obj in prototypes
-        ]
-        cache[key] = templates
-
-    ox, oy, oz = origin
-    c, s = math.cos(angle), math.sin(angle)
-    for template, local_position, local_rotation in templates:
-        if first_instance:
-            instance = template
-        else:
-            instance = template.copy()
-            if template.data is not None:
-                instance.data = template.data
-            bpy.context.collection.objects.link(instance)
-
-        lx, ly, lz = local_position
-        instance.location = (
-            ox + scale * (lx * c - ly * s),
-            oy + scale * (lx * s + ly * c),
-            oz + scale * lz
-        )
-        instance.rotation_euler = (
-            local_rotation[0],
-            local_rotation[1],
-            local_rotation[2] + angle
-        )
-        instance.scale = (scale, scale, scale)
-        parts.append(instance)
-
-
 def build_merchandise(size=256):
     metal = _solid("Brushed aluminum and closure metal", (0.48, 0.51, 0.49), 0.27, 0.78)
     dark_metal = _solid("Dark printed metal", (0.075, 0.095, 0.095), 0.32, 0.55)
@@ -528,7 +490,6 @@ def build_merchandise(size=256):
     }
 
     parts = []
-    instance_cache = {}
     gondolas = (-2.35, 2.35)
     shelves = (0.76, 1.45, 2.14)
     for gondola_index, gx in enumerate(gondolas):
@@ -542,19 +503,19 @@ def build_merchandise(size=256):
                     kind = (item + row * 2 + gondola_index * 3) % 7
                     origin = (x, y, shelf_z)
                     if kind == 0:
-                        _place_instanced(instance_cache, "can", _can, origin, angle, scale, parts, art["can"], metal, dark_metal)
+                        _can(origin, angle, scale, art["can"], metal, dark_metal, parts)
                     elif kind == 1:
-                        _place_instanced(instance_cache, "soda", _soda_bottle, origin, angle, scale, parts, art["soda"], orange_cap, plastic)
+                        _soda_bottle(origin, angle, scale, art["soda"], orange_cap, plastic, parts)
                     elif kind == 2:
-                        _place_instanced(instance_cache, "ketchup", _ketchup, origin, angle, scale, parts, art["ketchup"], red_cap, plastic)
+                        _ketchup(origin, angle, scale, art["ketchup"], red_cap, plastic, parts)
                     elif kind == 3:
-                        _place_instanced(instance_cache, "milk", _carton, origin, angle, scale, parts, art["milk"], carton_side, orange_cap)
+                        _carton(origin, angle, scale, art["milk"], carton_side, orange_cap, parts)
                     elif kind == 4:
-                        _place_instanced(instance_cache, "chips", _pillow_pack, origin, angle, scale, parts, art["chips"], foil, height=0.34, width=0.19, depth=0.055, name="Kettle chip stand pouch")
+                        _pillow_pack(origin, angle, scale, art["chips"], foil, parts, height=0.34, width=0.19, depth=0.055, name="Kettle chip stand pouch")
                     elif kind == 5:
-                        _place_instanced(instance_cache, "bar", _pillow_pack, origin, angle, scale, parts, art["bar"], foil, height=0.15, width=0.22, depth=0.035, name="Chocolate foil pillow pack")
+                        _pillow_pack(origin, angle, scale, art["bar"], foil, parts, height=0.15, width=0.22, depth=0.035, name="Chocolate foil pillow pack")
                     else:
-                        _place_instanced(instance_cache, "deli", _deli_tub, origin, angle, scale, parts, art["deli"], deli_lid, deli_cup)
+                        _deli_tub(origin, angle, scale, art["deli"], deli_lid, deli_cup, parts)
 
     # Refrigerated wall: smaller, detailed drink cans and PET bottles rather than blank cylinders.
     chilled = []
@@ -567,7 +528,7 @@ def build_merchandise(size=256):
                 angle = -math.pi / 2  # product artwork faces out through the refrigerator door.
                 scale = 0.78
                 if (cabinet + shelf_index + item) % 2 == 0:
-                    _place_instanced(instance_cache, "can", _can, origin, angle, scale, chilled, art["can"], metal, dark_metal)
+                    _can(origin, angle, scale, art["can"], metal, dark_metal, chilled)
                 else:
-                    _place_instanced(instance_cache, "soda", _soda_bottle, origin, angle, scale, chilled, art["soda"], orange_cap, plastic)
+                    _soda_bottle(origin, angle, scale, art["soda"], orange_cap, plastic, chilled)
     return parts, chilled
