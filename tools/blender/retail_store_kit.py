@@ -277,10 +277,10 @@ def build_store_kit(size, output, preview):
         add("Printed package footer",
             (face_x + face * 0.014, y + width * 0.12, z - height * 0.30),
             (0.008, width * 0.38, height * 0.055), label_ink, 0.002)
-        cylinder("Printed package emblem",
+        parts.append(cylinder("Printed package emblem",
                  (face_x + face * 0.018, y + width * 0.12, z + height * 0.02),
                  min(width, height) * 0.16, 0.009, label_accent, 12,
-                 rotation=(0, math.pi / 2, 0))
+                 rotation=(0, math.pi / 2, 0)))
     for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
         for row, z in enumerate((0.76, 1.45, 2.14)):
             for face in (-1, 1):
