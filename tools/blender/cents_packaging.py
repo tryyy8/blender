@@ -289,7 +289,10 @@ def _torus(name, major, minor, z, material, origin, angle, scale, parts, major_s
     return _finish(obj, origin, angle, scale, parts)
 
 
-def _bevel_box(name, dimensions, location, material, angle, scale, parts, bevel=0.008):
+def _bevel_box(
+    name, dimensions, location, material, angle, scale, parts,
+    bevel=0.008, product_origin=(0.0, 0.0, 0.0)
+):
     bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
     obj = bpy.context.object
     obj.name = name
@@ -300,7 +303,18 @@ def _bevel_box(name, dimensions, location, material, angle, scale, parts, bevel=
     mod.width = bevel
     mod.segments = 3
     obj.modifiers.new("Weighted normals", "WEIGHTED_NORMAL")
-    return _finish(obj, location, angle, scale, parts)
+
+    # These coordinates describe details in the product's local frame. Convert
+    # their position through the same yaw and scale as the main package body.
+    local_x, local_y, local_z = location
+    ox, oy, oz = product_origin
+    c, s = math.cos(angle), math.sin(angle)
+    world_location = (
+        ox + scale * (local_x * c - local_y * s),
+        oy + scale * (local_x * s + local_y * c),
+        oz + scale * local_z
+    )
+    return _finish(obj, world_location, angle, scale, parts)
 
 
 def _can(origin, angle, scale, art, metal, ink, parts):
@@ -315,7 +329,7 @@ def _can(origin, angle, scale, art, metal, ink, parts):
     _cylinder("Can lid", 0.057, 0.006, metal, 0.298, origin, angle, scale, parts, 40)
     _torus("Can top rolled rim", 0.057, 0.004, 0.296, metal, origin, angle, scale, parts)
     _torus("Can top countersink ring", 0.039, 0.0018, 0.302, ink, origin, angle, scale, parts)
-    _bevel_box("Embossed pull tab", (0.022, 0.038, 0.003), (0.008, -0.004, 0.306), metal, angle, scale, parts, 0.006)
+    _bevel_box("Embossed pull tab", (0.022, 0.038, 0.003), (0.008, -0.004, 0.306), metal, angle, scale, parts, 0.006, product_origin=origin)
     _cylinder("Pull tab rivet", 0.005, 0.003, ink, 0.307, origin, angle, scale, parts, 16)
 
 
@@ -351,8 +365,8 @@ def _ketchup(origin, angle, scale, art, cap, plastic, parts):
     for rib in range(18):
         theta = 2.0 * math.pi * rib / 18
         point = (0.041 * math.cos(theta), 0.041 * math.sin(theta), 0.015)
-        _bevel_box("Flip cap grip flute", (0.004, 0.007, 0.020), point, plastic, angle, scale, parts, 0.0015)
-    _bevel_box("Flip cap hinge", (0.022, 0.018, 0.008), (0.0, -0.036, 0.015), cap, angle, scale, parts, 0.003)
+        _bevel_box("Flip cap grip flute", (0.004, 0.007, 0.020), point, plastic, angle, scale, parts, 0.0015, product_origin=origin)
+    _bevel_box("Flip cap hinge", (0.022, 0.018, 0.008), (0.0, -0.036, 0.015), cap, angle, scale, parts, 0.003, product_origin=origin)
 
 
 def _carton(origin, angle, scale, art, side_mat, cap, parts):
@@ -390,7 +404,7 @@ def _carton(origin, angle, scale, art, side_mat, cap, parts):
     side_faces += [(2,7,8,3), (4,3,8,9)]
     side_obj = _mesh_object("Carton folded side walls and gable", side_vertices, side_faces, side_mat, smooth=False)
     _finish(side_obj, origin, angle, scale, parts)
-    _bevel_box("Gable fold seam", (0.152, 0.006, 0.007), (0, 0, 0.322), side_mat, angle, scale, parts, 0.002)
+    _bevel_box("Gable fold seam", (0.152, 0.006, 0.007), (0, 0, 0.322), side_mat, angle, scale, parts, 0.002, product_origin=origin)
     _cylinder("Carton screw neck", 0.020, 0.018, cap, 0.320, origin, angle, scale, parts, 24, 0.002)
     _cylinder("Carton screw closure", 0.023, 0.025, cap, 0.337, origin, angle, scale, parts, 28, 0.003)
     _torus("Carton tamper ring", 0.021, 0.002, 0.326, side_mat, origin, angle, scale, parts)
@@ -428,16 +442,16 @@ def _pillow_pack(origin, angle, scale, art, foil, parts, height=0.34, width=0.19
     # Heat-sealed crimp jaws, side welds and a folded bottom gusset.
     for z in (0.022, height + 0.018):
         _bevel_box(name + " ribbed heat seal", (0.013, width * 1.04, 0.022),
-                   (0, 0, z), foil, angle, scale, parts, 0.004)
+                   (0, 0, z), foil, angle, scale, parts, 0.004, product_origin=origin)
         for rib in range(7):
             y = -width * 0.42 + rib * width * 0.14
             _bevel_box(name + " seal impression", (0.015, 0.003, 0.020),
-                       (0, y, z), art, angle, scale, parts, 0.001)
+                       (0, y, z), art, angle, scale, parts, 0.001, product_origin=origin)
     for side in (-1, 1):
         _bevel_box(name + " vertical fin seal", (0.014, 0.010, height * 0.88),
-                   (0, side * width * 0.485, height * 0.50), foil, angle, scale, parts, 0.003)
+                   (0, side * width * 0.485, height * 0.50), foil, angle, scale, parts, 0.003, product_origin=origin)
     _bevel_box(name + " base gusset", (depth * 0.95, width * 0.90, 0.012),
-               (0, 0, 0.018), foil, angle, scale, parts, 0.004)
+               (0, 0, 0.018), foil, angle, scale, parts, 0.004, product_origin=origin)
 
 
 def _deli_tub(origin, angle, scale, art, lid, cup, parts):
@@ -451,7 +465,7 @@ def _deli_tub(origin, angle, scale, art, lid, cup, parts):
     _torus("Snap lid lower locking lip", 0.078, 0.004, 0.191, lid, origin, angle, scale, parts)
     _cylinder("Deli cup snap lid", 0.078, 0.012, lid, 0.199, origin, angle, scale, parts, 40, 0.003)
     _torus("Deli lid raised rim", 0.071, 0.003, 0.207, lid, origin, angle, scale, parts)
-    _bevel_box("Deli lid pull tab", (0.024, 0.020, 0.006), (0.055, 0, 0.210), lid, angle, scale, parts, 0.004)
+    _bevel_box("Deli lid pull tab", (0.024, 0.020, 0.006), (0.055, 0, 0.210), lid, angle, scale, parts, 0.004, product_origin=origin)
 
 
 def build_merchandise(size=256):
