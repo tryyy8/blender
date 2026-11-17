@@ -25,6 +25,7 @@ def arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
     parser.add_argument("--texture-size", type=int, default=256)
+    parser.add_argument("--preview", default=None)
     return parser.parse_args(argv)
 
 
@@ -87,7 +88,7 @@ def join_by_material(objects, label):
     return joined
 
 
-def build_store_kit(size):
+def build_store_kit(size, output, preview):
     mats = {
         "plaster": make_material("Retail warm plaster", "plaster", (0.72, 0.66, 0.55), 0.88, size=size),
         "paint": make_material("Retail painted accent", "painted", (0.13, 0.31, 0.29), 0.72, size=size),
@@ -215,18 +216,57 @@ def build_store_kit(size):
     # module, geometry is joined by material to keep its draw-call count bounded.
     bpy.ops.object.select_all(action="SELECT")
     bpy.context.view_layer.objects.active = bpy.context.selected_objects[0]
-    bpy.ops.export_scene.gltf(filepath=os.path.abspath(arguments().output),
+    bpy.ops.export_scene.gltf(filepath=os.path.abspath(output),
         export_format="GLB", export_apply=True, export_texcoords=True,
         export_normals=True, export_materials="EXPORT", export_image_format="AUTO",
         export_yup=True)
-    print("Retail store kit exported:", os.path.abspath(arguments().output))
+    print("Retail store kit exported:", os.path.abspath(output))
+
+    if preview:
+        scene = bpy.context.scene
+        scene.render.engine = "BLENDER_EEVEE"
+        scene.render.resolution_x = 1200
+        scene.render.resolution_y = 900
+        scene.render.resolution_percentage = 70
+        scene.render.image_settings.file_format = "PNG"
+        scene.render.filepath = os.path.abspath(preview)
+        scene.view_settings.view_transform = "Standard"
+        world = bpy.data.worlds.new("Retail kit preview world") if not scene.world else scene.world
+        scene.world = world
+        world.use_nodes = True
+        world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.24, 0.29, 0.30, 1)
+        world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.55
+
+        bpy.ops.object.camera_add(location=(15.5, -22.0, 16.0))
+        camera = bpy.context.object
+        camera.name = "Retail kit preview camera"
+        target = Vector((0.0, 0.0, 1.55))
+        camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+        camera.data.lens = 48
+        scene.camera = camera
+
+        for name, location, energy, size_value in (
+            ("Large soft key", (1.0, -8.0, 15.0), 2600, 10.0),
+            ("Cool fill", (-10.0, -1.0, 9.0), 1500, 8.0),
+            ("Back rim", (3.0, 9.0, 12.0), 1900, 7.0)
+        ):
+            bpy.ops.object.light_add(type="AREA", location=location)
+            light = bpy.context.object
+            light.name = name
+            light.data.energy = energy
+            light.data.shape = "DISK"
+            light.data.size = size_value
+            light.rotation_euler = (target - light.location).to_track_quat("-Z", "Y").to_euler()
+
+        bpy.ops.render.render(write_still=True)
+        print("Retail store kit preview rendered:", os.path.abspath(preview))
 
 
 def main():
     options = arguments()
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
-    build_store_kit(options.texture_size)
+    build_store_kit(options.texture_size, options.output, options.preview)
 
 
 if __name__ == "__main__":
