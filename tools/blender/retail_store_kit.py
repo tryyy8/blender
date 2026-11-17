@@ -34,7 +34,7 @@ def make_material(name, family, color, roughness, metallic=0.0, size=256):
     return material_family(name, family, color, roughness, metallic, size=size, seed=seed)
 
 
-def make_glass(name, color=(0.10, 0.20, 0.23), roughness=0.18, metallic=0.18):
+def make_glass(name, color=(0.22, 0.31, 0.32), roughness=0.11, metallic=0.12):
     material = bpy.data.materials.new(name)
     material.diffuse_color = (*color, 1)
     material.use_nodes = True
@@ -188,21 +188,24 @@ def build_store_kit(size, output, preview):
 
     flush("Stockroom")
 
-    # Product silhouettes: deliberately varied packaging families, not text labels.
+    # Product silhouettes sit on the actual gondola shelf surfaces. The shelves run
+    # along Y, so products are distributed down that axis, with a row on each face.
     package_mats = (mats["packaging_a"], mats["packaging_b"], mats["packaging_c"])
-    for row, z in enumerate((0.76, 1.45, 2.14)):
-        for shelf_y in (-2.0, 0.45, 2.90):
-            for item in range(9):
-                x = -2.80 + item * 0.34
-                material = package_mats[(item + row + int(shelf_y * 10)) % 3]
-                if item % 3 == 0:
-                    obj = cylinder("Bottle silhouette", (x, shelf_y, z + 0.18), 0.105, 0.36, material, 12)
-                    parts.append(obj)
-                    add("Bottle neck", (x, shelf_y, z + 0.39), (0.09, 0.09, 0.10), material, 0.018)
-                elif item % 3 == 1:
-                    add("Carton silhouette", (x, shelf_y, z + 0.16), (0.22, 0.22, 0.32), material, 0.025)
-                else:
-                    add("Snack pouch silhouette", (x, shelf_y, z + 0.13), (0.24, 0.14, 0.26), material, 0.035)
+    for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
+        for row, z in enumerate((0.76, 1.45, 2.14)):
+            for face in (-1, 1):
+                product_x = gondola_x + face * 0.25
+                for item in range(9):
+                    product_y = -2.55 + item * 0.64
+                    material = package_mats[(item + row + gondola_index + (1 if face > 0 else 0)) % 3]
+                    if item % 3 == 0:
+                        obj = cylinder("Bottle silhouette", (product_x, product_y, z + 0.18), 0.105, 0.36, material, 12)
+                        parts.append(obj)
+                        add("Bottle neck", (product_x, product_y, z + 0.39), (0.09, 0.09, 0.10), material, 0.018)
+                    elif item % 3 == 1:
+                        add("Carton silhouette", (product_x, product_y, z + 0.16), (0.22, 0.22, 0.32), material, 0.025)
+                    else:
+                        add("Snack pouch silhouette", (product_x, product_y, z + 0.13), (0.24, 0.14, 0.26), material, 0.035)
 
     flush("ProductDisplays")
 
