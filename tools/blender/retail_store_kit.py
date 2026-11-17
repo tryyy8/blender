@@ -292,40 +292,39 @@ def build_store_kit(size, output, preview):
                         kind = (item + row * 2 + gondola_index + depth_row) % 5
                         material = package_mats[(item + row + gondola_index + depth_row) % 3]
                         if kind == 0:
-                            # Tall bottled drink with shoulder, neck and cap.
-                            body_z = z + 0.17
-                            obj = cylinder("Bottled drink body", (product_x, y, body_z), 0.082, 0.31, material, 16)
+                            # Formed bottle body, sloped shoulder, narrow neck and separate cap.
+                            obj = bottle_mesh("Molded bottled drink", (product_x, y, z), material)
                             parts.append(obj)
-                            obj = cylinder("Bottle shoulder", (product_x, y, z + 0.345), 0.060, 0.075, material, 16)
+                            obj = cylinder("Bottle cap", (product_x, y, z + 0.465), 0.041, 0.030, label_accent, 12)
                             parts.append(obj)
-                            obj = cylinder("Bottle neck", (product_x, y, z + 0.405), 0.038, 0.075, material, 12)
-                            parts.append(obj)
-                            obj = cylinder("Bottle cap", (product_x, y, z + 0.448), 0.043, 0.022, mats["light"], 12)
-                            parts.append(obj)
-                            add("Bottle label band", (product_x + face * 0.080, y, z + 0.18), (0.012, 0.105, 0.105), mats["light"], 0.006)
+                            package_print(product_x + face * 0.081, y, z + 0.19, face, 0.115, 0.16)
                         elif kind == 1:
-                            # Aluminum drink can with a distinct top and label band.
-                            obj = cylinder("Drink can", (product_x, y, z + 0.135), 0.073, 0.27, material, 16)
+                            # Aluminum can with rolled top and bottom rims.
+                            obj = cylinder("Aluminum drink can", (product_x, y, z + 0.145), 0.073, 0.29, material, 24)
                             parts.append(obj)
-                            obj = cylinder("Can top", (product_x, y, z + 0.275), 0.070, 0.012, mats["metal"], 16)
+                            obj = cylinder("Can top", (product_x, y, z + 0.294), 0.070, 0.012, mats["metal"], 24)
                             parts.append(obj)
-                            add("Can label panel", (product_x + face * 0.073, y, z + 0.14), (0.012, 0.095, 0.105), mats["light"], 0.004)
+                            obj = cylinder("Can bottom rim", (product_x, y, z + 0.005), 0.070, 0.010, mats["metal"], 24)
+                            parts.append(obj)
+                            package_print(product_x + face * 0.074, y, z + 0.15, face, 0.105, 0.17)
                         elif kind == 2:
-                            # Boxed food with a contrasting front label.
-                            add("Cereal and snack carton", (product_x, y, z + 0.17), (0.17, 0.17, 0.34), material, 0.022)
-                            add("Carton front label", (product_x + face * 0.087, y, z + 0.18), (0.012, 0.115, 0.16), mats["light"], 0.006)
+                            # Carton with folded top gable and a deliberately designed front panel.
+                            add("Gable carton body", (product_x, y, z + 0.17), (0.17, 0.17, 0.34), material, 0.018)
+                            add("Carton folded top", (product_x, y, z + 0.35), (0.17, 0.17, 0.035), label_accent, 0.008)
+                            package_print(product_x + face * 0.088, y, z + 0.17, face, 0.12, 0.22)
                         elif kind == 3:
-                            # Soft snack pouch with folded top and a broad printed face.
-                            add("Snack pouch", (product_x, y, z + 0.13), (0.18, 0.13, 0.26), material, 0.035)
-                            add("Pouch top seal", (product_x, y, z + 0.265), (0.17, 0.14, 0.025), mats["light"], 0.008)
-                            add("Pouch front label", (product_x + face * 0.092, y, z + 0.13), (0.012, 0.095, 0.13), mats["light"], 0.006)
+                            # Flexible stand-up pouch with a pinched heat-sealed top.
+                            obj = pouch_mesh("Stand-up snack pouch", (product_x, y, z), material)
+                            parts.append(obj)
+                            add("Pouch heat seal", (product_x, y, z + 0.292), (0.14, 0.018, 0.018), label_light, 0.004)
+                            package_print(product_x + face * 0.096, y, z + 0.15, face, 0.13, 0.19)
                         else:
-                            # Short jar or tub for spreads and convenience foods.
-                            obj = cylinder("Food tub", (product_x, y, z + 0.105), 0.085, 0.21, material, 16)
+                            # Convenience-food tub with a raised lid and printed wrap.
+                            obj = cylinder("Food tub", (product_x, y, z + 0.105), 0.085, 0.21, material, 24)
                             parts.append(obj)
-                            obj = cylinder("Food tub lid", (product_x, y, z + 0.218), 0.087, 0.025, mats["light"], 16)
+                            obj = cylinder("Food tub lid", (product_x, y, z + 0.218), 0.087, 0.025, label_light, 24)
                             parts.append(obj)
-                            add("Food tub label", (product_x + face * 0.085, y, z + 0.11), (0.012, 0.105, 0.09), mats["light"], 0.005)
+                            package_print(product_x + face * 0.086, y, z + 0.11, face, 0.12, 0.12)
 
     flush("ProductDisplays")
 
