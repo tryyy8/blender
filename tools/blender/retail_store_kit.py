@@ -154,6 +154,11 @@ def build_store_kit(size, output, preview):
         add("Gondola plinth", (x, 0.45, 0.18), (1.05, 6.8, 0.34), mats["metal"], 0.055)
         for z in (0.56, 1.25, 1.94, 2.63):
             add("Gondola shelf", (x, 0.45, z), (1.02, 6.55, 0.095), mats["wood"], 0.018)
+            for face in (-1, 1):
+                add("Shelf price rail", (x + face * 0.505, 0.45, z + 0.065), (0.035, 6.48, 0.075), mats["metal"], 0.012)
+                for tag in range(9):
+                    tag_y = -2.55 + tag * 0.72
+                    add("Shelf price ticket", (x + face * 0.527, tag_y, z + 0.065), (0.012, 0.25, 0.052), mats["light"], 0.004)
         for y in (-2.85, 3.75):
             add("Gondola upright", (x, y, 1.58), (1.08, 0.10, 2.95), mats["metal"], 0.025)
         add("Gondola header rail", (x, 0.45, 3.12), (1.10, 6.65, 0.13), mats["paint"], 0.025)
@@ -190,26 +195,79 @@ def build_store_kit(size, output, preview):
 
     flush("Stockroom")
 
-    # Product silhouettes sit on the actual gondola shelf surfaces. The shelves run
-    # along Y, so products are distributed down that axis, with a row on each face.
+    # Merchandise is built as recognizable retail forms rather than repeated
+    # placeholder blocks. Two staggered depth rows fill each gondola face while
+    # leaving the shelf edges and neighboring products readable.
     package_mats = (mats["packaging_a"], mats["packaging_b"], mats["packaging_c"])
     for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
-        for row, z in enumerate((0.76, 1.45, 2.14)):
+        for row, z in enumerate((0.76, 1.45, 2.14, 2.83)):
             for face in (-1, 1):
-                product_x = gondola_x + face * 0.25
                 for item in range(9):
                     product_y = -2.55 + item * 0.64
-                    material = package_mats[(item + row + gondola_index + (1 if face > 0 else 0)) % 3]
-                    if item % 3 == 0:
-                        obj = cylinder("Bottle silhouette", (product_x, product_y, z + 0.18), 0.105, 0.36, material, 12)
-                        parts.append(obj)
-                        add("Bottle neck", (product_x, product_y, z + 0.39), (0.09, 0.09, 0.10), material, 0.018)
-                    elif item % 3 == 1:
-                        add("Carton silhouette", (product_x, product_y, z + 0.16), (0.22, 0.22, 0.32), material, 0.025)
-                    else:
-                        add("Snack pouch silhouette", (product_x, product_y, z + 0.13), (0.24, 0.14, 0.26), material, 0.035)
+                    for depth_row in range(2):
+                        product_x = gondola_x + face * (0.15 + depth_row * 0.22)
+                        y = product_y + depth_row * 0.28
+                        kind = (item + row * 2 + gondola_index + depth_row) % 5
+                        material = package_mats[(item + row + gondola_index + depth_row) % 3]
+                        if kind == 0:
+                            # Tall bottled drink with shoulder, neck and cap.
+                            body_z = z + 0.17
+                            obj = cylinder("Bottled drink body", (product_x, y, body_z), 0.082, 0.31, material, 16)
+                            parts.append(obj)
+                            obj = cylinder("Bottle shoulder", (product_x, y, z + 0.345), 0.060, 0.075, material, 16)
+                            parts.append(obj)
+                            obj = cylinder("Bottle neck", (product_x, y, z + 0.405), 0.038, 0.075, material, 12)
+                            parts.append(obj)
+                            obj = cylinder("Bottle cap", (product_x, y, z + 0.448), 0.043, 0.022, mats["light"], 12)
+                            parts.append(obj)
+                            add("Bottle label band", (product_x + face * 0.080, y, z + 0.18), (0.012, 0.105, 0.105), mats["light"], 0.006)
+                        elif kind == 1:
+                            # Aluminum drink can with a distinct top and label band.
+                            obj = cylinder("Drink can", (product_x, y, z + 0.135), 0.073, 0.27, material, 16)
+                            parts.append(obj)
+                            obj = cylinder("Can top", (product_x, y, z + 0.275), 0.070, 0.012, mats["metal"], 16)
+                            parts.append(obj)
+                            add("Can label panel", (product_x + face * 0.073, y, z + 0.14), (0.012, 0.095, 0.105), mats["light"], 0.004)
+                        elif kind == 2:
+                            # Boxed food with a contrasting front label.
+                            add("Cereal and snack carton", (product_x, y, z + 0.17), (0.17, 0.17, 0.34), material, 0.022)
+                            add("Carton front label", (product_x + face * 0.087, y, z + 0.18), (0.012, 0.115, 0.16), mats["light"], 0.006)
+                        elif kind == 3:
+                            # Soft snack pouch with folded top and a broad printed face.
+                            add("Snack pouch", (product_x, y, z + 0.13), (0.18, 0.13, 0.26), material, 0.035)
+                            add("Pouch top seal", (product_x, y, z + 0.265), (0.17, 0.14, 0.025), mats["light"], 0.008)
+                            add("Pouch front label", (product_x + face * 0.092, y, z + 0.13), (0.012, 0.095, 0.13), mats["light"], 0.006)
+                        else:
+                            # Short jar or tub for spreads and convenience foods.
+                            obj = cylinder("Food tub", (product_x, y, z + 0.105), 0.085, 0.21, material, 16)
+                            parts.append(obj)
+                            obj = cylinder("Food tub lid", (product_x, y, z + 0.218), 0.087, 0.025, mats["light"], 16)
+                            parts.append(obj)
+                            add("Food tub label", (product_x + face * 0.085, y, z + 0.11), (0.012, 0.105, 0.09), mats["light"], 0.005)
 
     flush("ProductDisplays")
+
+    # Chiller shelves receive their own rows of drinks so the refrigerated wall
+    # reads as stocked merchandise even before individual products are interactive.
+    for cabinet in range(4):
+        cabinet_x = -5.85 + cabinet * 0.92
+        for shelf_index, shelf_z in enumerate((0.68, 1.34, 2.0, 2.66)):
+            for item in range(4):
+                drink_x = cabinet_x - 0.25 + item * 0.16
+                drink_y = 4.28
+                drink_material = package_mats[(cabinet + shelf_index + item) % 3]
+                if item % 2 == 0:
+                    obj = cylinder("Chiller bottle", (drink_x, drink_y, shelf_z + 0.15), 0.052, 0.28, drink_material, 12)
+                    parts.append(obj)
+                    obj = cylinder("Chiller bottle cap", (drink_x, drink_y, shelf_z + 0.305), 0.030, 0.035, mats["light"], 10)
+                    parts.append(obj)
+                else:
+                    obj = cylinder("Chiller can", (drink_x, drink_y, shelf_z + 0.105), 0.055, 0.21, drink_material, 12)
+                    parts.append(obj)
+                    obj = cylinder("Chiller can top", (drink_x, drink_y, shelf_z + 0.215), 0.053, 0.010, mats["metal"], 12)
+                    parts.append(obj)
+
+    flush("ChillerMerchandise")
 
     # Warm ceiling fixtures sit just below the roof plane.
     for x in (-4.5, 0.0, 4.5):
