@@ -224,7 +224,13 @@ def _lathe(name, profile, material, origin, angle, scale, parts, sides=40):
             c = b + sides + 1
             d = a + sides + 1
             faces.append((a, b, c, d))
+    side_face_count = len(faces)
+    faces.append(tuple(range(sides - 1, -1, -1)))
+    top_start = (len(profile) - 1) * (sides + 1)
+    faces.append(tuple(top_start + side for side in range(sides)))
     obj = _mesh_object(name, vertices, faces, material, uvs, smooth=True)
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = polygon.index < side_face_count
     return _finish(obj, origin, angle, scale, parts)
 
 
