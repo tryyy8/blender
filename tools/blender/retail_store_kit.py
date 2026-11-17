@@ -200,7 +200,7 @@ def build_store_kit(size, output, preview):
     # leaving the shelf edges and neighboring products readable.
     package_mats = (mats["packaging_a"], mats["packaging_b"], mats["packaging_c"])
     for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
-        for row, z in enumerate((0.76, 1.45, 2.14, 2.83)):
+        for row, z in enumerate((0.76, 1.45, 2.14)):
             for face in (-1, 1):
                 for item in range(9):
                     product_y = -2.55 + item * 0.64
