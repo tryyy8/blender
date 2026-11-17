@@ -113,18 +113,43 @@ def _artwork(name, title, subtitle, palette):
     for channel in range(3):
         image[..., channel] = np.clip(base[channel] * gradient, 0, 255).astype(np.uint8)
 
-    # Printed substrate, a broad graphic field, and deliberately composed brand panels.
+    # A clean hierarchy with restrained side rails keeps every product name readable.
     _rect(image, 0, 0, size, 42, dark)
     _rect(image, 0, 470, size, 42, dark)
     _rect(image, 25, 60, 462, 390, light)
     _rect(image, 25, 60, 462, 13, accent)
     _rect(image, 25, 437, 462, 13, accent)
-    _polygon(image, [(25, 82), (125, 60), (240, 450), (140, 450)], accent)
-    _polygon(image, [(487, 80), (430, 60), (340, 450), (402, 450)], dark)
-    _circle(image, 402, 160, 52, accent)
-    _circle(image, 402, 160, 40, light)
-    _circle(image, 402, 160, 30, accent)
-    _circle(image, 402, 160, 20, light)
+    _rect(image, 25, 73, 9, 364, accent)
+    _rect(image, 478, 73, 9, 364, dark)
+
+    # A compact seal sits in the left margin instead of colliding with the wordmark.
+    _circle(image, 64, 160, 24, accent)
+    _circle(image, 64, 160, 18, light)
+    _circle(image, 64, 160, 12, accent)
+    if "SUNBURST" in name:
+        for spoke in range(8):
+            theta = spoke * math.pi / 4
+            x0 = 64 + int(math.cos(theta) * 15)
+            y0 = 160 + int(math.sin(theta) * 15)
+            x1 = 64 + int(math.cos(theta) * 21)
+            y1 = 160 + int(math.sin(theta) * 21)
+            _rect(image, min(x0,x1), min(y0,y1), max(2,abs(x1-x0)+1), max(2,abs(y1-y0)+1), dark)
+    elif "MEADOW" in name:
+        _polygon(image, [(43,169),(56,148),(68,165),(78,151),(88,169)], dark)
+        _rect(image, 43, 170, 45, 3, accent)
+    elif "RED LABEL" in name:
+        _polygon(image, [(54,143),(61,133),(64,147),(74,134),(75,146),(85,142),(77,154),(59,154)], dark)
+    elif "DELI" in name:
+        _polygon(image, [(48,174),(57,151),(68,160),(82,145),(78,171),(64,182)], dark)
+        _rect(image, 64, 159, 2, 21, light)
+    elif "NOCTURNE" in name:
+        _polygon(image, [(49,160),(57,143),(74,140),(83,157),(75,176),(58,178)], dark)
+        _rect(image, 64, 145, 2, 31, light)
+    elif "CRISP" in name:
+        for dot in ((57,151),(70,153),(61,166),(74,168)):
+            _circle(image, dot[0], dot[1], 2, dark)
+    else:
+        _polygon(image, [(51,174),(54,157),(64,140),(73,153),(77,168),(65,181)], dark)
 
     brand = name.upper()
     brand_scale = 3 if len(brand) > 9 else 4
@@ -132,19 +157,18 @@ def _artwork(name, title, subtitle, palette):
 
     title_scale = 6 if len(title) <= 8 else 5
     title_width = len(title) * 6 * title_scale
-    _text(image, (size - title_width) // 2, 190, title, title_scale, dark)
+    _text(image, (size - title_width) // 2, 194, title, title_scale, dark)
     sub_scale = 4
-    _text(image, (size - len(subtitle) * 6 * sub_scale) // 2, 252, subtitle, sub_scale, accent)
+    _text(image, (size - len(subtitle) * 6 * sub_scale) // 2, 266, subtitle, sub_scale, accent)
 
-    # Small print, fine rules, batch mark, and a restrained product seal.
-    _rect(image, 95, 320, 322, 3, dark)
-    _rect(image, 116, 338, 280, 2, accent)
+    # Fine rules and small-print details finish the printed panel without obscuring its name.
+    _rect(image, 112, 326, 288, 3, dark)
+    _rect(image, 132, 342, 248, 2, accent)
     _text(image, 118, 365, "SMALL BATCH  QUALITY GOODS", 2, dark)
     _text(image, 152, 484, "CENTS  /  MARKET GOODS", 2, light)
-    _circle(image, 402, 160, 58, dark, outline=dark, thickness=4)
     for offset in range(4):
-        _rect(image, 72, 145 + offset * 8, 38 + offset * 5, 2, dark)
-        _rect(image, 72, 290 + offset * 8, 28 + offset * 7, 2, accent)
+        _rect(image, 48, 292 + offset * 8, 22 + offset * 5, 2, dark)
+        _rect(image, 435, 145 + offset * 8, 22 + offset * 5, 2, accent)
     image = image[::-1].copy()  # Blender image pixels are stored bottom row first.
 
     datablock = bpy.data.images.new("CENTS Package Art - " + name, width=size, height=size, alpha=False)
@@ -361,8 +385,9 @@ def _carton(origin, angle, scale, art, side_mat, cap, parts):
         (-depth/2, width/2, shoulder_z)
     ]
     side_faces = [(0,1,2,3,4), (5,9,8,7,6)]
-    # Roof slopes are separate folded panels, one on either side of the ridge.
-    side_faces += [(1,6,7,2), (0,4,9,5), (2,7,8,3), (4,3,8,9)]
+    # The front and rear printed panels are separate UV meshes; only the folded
+    # roof planes belong to this side-board mesh, avoiding coplanar overlap.
+    side_faces += [(2,7,8,3), (4,3,8,9)]
     side_obj = _mesh_object("Carton folded side walls and gable", side_vertices, side_faces, side_mat, smooth=False)
     _finish(side_obj, origin, angle, scale, parts)
     _bevel_box("Gable fold seam", (0.152, 0.006, 0.007), (0, 0, 0.322), side_mat, angle, scale, parts, 0.002)
