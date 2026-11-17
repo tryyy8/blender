@@ -18,6 +18,7 @@ if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 
 from cents_materials import material_family
+from cents_packaging import build_merchandise
 
 
 def arguments():
@@ -195,179 +196,12 @@ def build_store_kit(size, output, preview):
 
     flush("Stockroom")
 
-    # Merchandise is built as recognizable retail forms rather than repeated
-    # placeholder blocks. Two staggered depth rows fill each gondola face while
-    # leaving the shelf edges and neighboring products readable.
-    # A broader coordinated shelf palette gives each product family its own identity.
-    package_mats = (
-        mats["packaging_a"], mats["packaging_b"], mats["packaging_c"],
-        make_material("Packaging berry", "painted", (0.42, 0.13, 0.20), 0.48, size=size),
-        make_material("Packaging cream", "painted", (0.88, 0.77, 0.57), 0.58, size=size),
-        make_material("Packaging midnight", "painted", (0.075, 0.12, 0.16), 0.42, size=size),
-    )
-    label_ink = make_material("Packaging dark print", "painted", (0.075, 0.085, 0.075), 0.62, size=size)
-    label_light = make_material("Packaging paper print", "painted", (0.94, 0.86, 0.68), 0.72, size=size)
-    label_accent = make_material("Packaging bright print", "painted", (0.92, 0.38, 0.12), 0.52, size=size)
-
-    def bottle_mesh(name, location, material):
-        profile = ((0.070, 0.00), (0.078, 0.035), (0.080, 0.22),
-                   (0.074, 0.29), (0.050, 0.34), (0.036, 0.39),
-                   (0.036, 0.45))
-        vertices, faces = [], []
-        sides = 16
-        for radius, height in profile:
-            for side in range(sides):
-                angle = 2.0 * math.pi * side / sides
-                vertices.append((radius * math.cos(angle), radius * math.sin(angle), height))
-        for ring in range(len(profile) - 1):
-            for side in range(sides):
-                a = ring * sides + side
-                b = ring * sides + (side + 1) % sides
-                faces.append((a, b, b + sides, a + sides))
-        faces.extend([tuple(range(sides - 1, -1, -1)),
-                      tuple((len(profile) - 1) * sides + side for side in range(sides))])
-        mesh = bpy.data.meshes.new(name + " formed profile")
-        mesh.from_pydata(vertices, [], faces)
-        mesh.materials.append(material)
-        obj = bpy.data.objects.new(name, mesh)
-        bpy.context.collection.objects.link(obj)
-        obj.location = location
-        bevel = obj.modifiers.new("Soft molded transitions", "BEVEL")
-        bevel.width = 0.008
-        bevel.segments = 2
-        obj.modifiers.new("Bottle weighted normals", "WEIGHTED_NORMAL")
-        return obj
-
-    def pouch_mesh(name, location, material):
-        rings = ((0.00, 0.060, 0.035), (0.035, 0.085, 0.048),
-                 (0.17, 0.095, 0.052), (0.27, 0.078, 0.045),
-                 (0.30, 0.070, 0.040))
-        vertices, faces = [], [(0, 3, 2, 1)]
-        for height, half_width, half_depth in rings:
-            vertices.extend(((-half_width, -half_depth, height),
-                             (half_width, -half_depth, height),
-                             (half_width, half_depth, height),
-                             (-half_width, half_depth, height)))
-        for ring in range(len(rings) - 1):
-            for side in range(4):
-                a = ring * 4 + side
-                b = ring * 4 + (side + 1) % 4
-                faces.append((a, b, b + 4, a + 4))
-        faces.append(tuple((len(rings) - 1) * 4 + side for side in range(4)))
-        mesh = bpy.data.meshes.new(name + " flexible form")
-        mesh.from_pydata(vertices, [], faces)
-        mesh.materials.append(material)
-        obj = bpy.data.objects.new(name, mesh)
-        bpy.context.collection.objects.link(obj)
-        obj.location = location
-        bevel = obj.modifiers.new("Soft pouch seams", "BEVEL")
-        bevel.width = 0.012
-        bevel.segments = 2
-        obj.modifiers.new("Pouch weighted normals", "WEIGHTED_NORMAL")
-        return obj
-
-    def package_print(face_x, y, z, face, width, height, product_name):
-        add("Printed package field", (face_x, y, z), (0.014, width, height), label_light, 0.004)
-        add("Printed package color stripe",
-            (face_x + face * 0.009, y - width * 0.31, z),
-            (0.008, width * 0.16, height * 0.94), label_accent, 0.003)
-        add("Printed package header",
-            (face_x + face * 0.014, y + width * 0.17, z + height * 0.31),
-            (0.008, width * 0.48, height * 0.12), label_ink, 0.002)
-        add("Printed package footer",
-            (face_x + face * 0.014, y + width * 0.12, z - height * 0.30),
-            (0.008, width * 0.38, height * 0.055), label_ink, 0.002)
-        parts.append(cylinder("Printed package emblem",
-                 (face_x + face * 0.018, y + width * 0.12, z + height * 0.02),
-                 min(width, height) * 0.16, 0.009, label_accent, 12,
-                 rotation=(0, math.pi / 2, 0)))
-        # Small raised print makes the packages read as designed products, not blank props.
-        font = bpy.data.curves.new("Printed " + product_name, type="FONT")
-        font.body = product_name
-        font.size = min(width * 0.48, height * 0.20)
-        font.align_x = "CENTER"
-        font.align_y = "CENTER"
-        text_obj = bpy.data.objects.new("Package typography " + product_name, font)
-        bpy.context.collection.objects.link(text_obj)
-        basis = Matrix((Vector((0, face, 0)), Vector((0, 0, 1)),
-                        Vector((face, 0, 0)))).transposed()
-        text_obj.rotation_mode = "QUATERNION"
-        text_obj.rotation_quaternion = basis.to_quaternion()
-        text_obj.location = (face_x + face * 0.026, y + width * 0.12, z + height * 0.02)
-        bpy.ops.object.select_all(action="DESELECT")
-        text_obj.select_set(True)
-        bpy.context.view_layer.objects.active = text_obj
-        bpy.ops.object.convert(target="MESH")
-        text_obj = bpy.context.object
-        text_obj.data.materials.append(label_ink)
-        parts.append(text_obj)
-    for gondola_index, gondola_x in enumerate((-2.35, 2.35), start=1):
-        for row, z in enumerate((0.76, 1.45, 2.14)):
-            for face in (-1, 1):
-                for item in range(9):
-                    product_y = -2.55 + item * 0.64
-                    for depth_row in range(2):
-                        product_x = gondola_x + face * (0.15 + depth_row * 0.22)
-                        y = product_y + depth_row * 0.28
-                        kind = (item + row * 2 + gondola_index + depth_row) % 5
-                        material = package_mats[(item + row + gondola_index + depth_row) % 3]
-                        if kind == 0:
-                            # Formed bottle body, sloped shoulder, narrow neck and separate cap.
-                            obj = bottle_mesh("Molded bottled drink", (product_x, y, z), material)
-                            parts.append(obj)
-                            obj = cylinder("Bottle cap", (product_x, y, z + 0.465), 0.041, 0.030, label_accent, 12)
-                            parts.append(obj)
-                            package_print(product_x + face * 0.081, y, z + 0.19, face, 0.115, 0.16, "COLA")
-                        elif kind == 1:
-                            # Aluminum can with rolled top and bottom rims.
-                            obj = cylinder("Aluminum drink can", (product_x, y, z + 0.145), 0.073, 0.29, material, 24)
-                            parts.append(obj)
-                            obj = cylinder("Can top", (product_x, y, z + 0.294), 0.070, 0.012, mats["metal"], 24)
-                            parts.append(obj)
-                            obj = cylinder("Can bottom rim", (product_x, y, z + 0.005), 0.070, 0.010, mats["metal"], 24)
-                            parts.append(obj)
-                            package_print(product_x + face * 0.074, y, z + 0.15, face, 0.105, 0.17, "FIZZ")
-                        elif kind == 2:
-                            # Carton with folded top gable and a deliberately designed front panel.
-                            add("Gable carton body", (product_x, y, z + 0.17), (0.17, 0.17, 0.34), material, 0.018)
-                            add("Carton folded top", (product_x, y, z + 0.35), (0.17, 0.17, 0.035), label_accent, 0.008)
-                            package_print(product_x + face * 0.088, y, z + 0.17, face, 0.12, 0.22, "OATS")
-                        elif kind == 3:
-                            # Flexible stand-up pouch with a pinched heat-sealed top.
-                            obj = pouch_mesh("Stand-up snack pouch", (product_x, y, z), material)
-                            parts.append(obj)
-                            add("Pouch heat seal", (product_x, y, z + 0.292), (0.14, 0.018, 0.018), label_light, 0.004)
-                            package_print(product_x + face * 0.096, y, z + 0.15, face, 0.13, 0.19, "CHIPS")
-                        else:
-                            # Convenience-food tub with a raised lid and printed wrap.
-                            obj = cylinder("Food tub", (product_x, y, z + 0.105), 0.085, 0.21, material, 24)
-                            parts.append(obj)
-                            obj = cylinder("Food tub lid", (product_x, y, z + 0.218), 0.087, 0.025, label_light, 24)
-                            parts.append(obj)
-                            package_print(product_x + face * 0.086, y, z + 0.11, face, 0.12, 0.12, "DELI")
-
+    # Product families use their own custom meshes and full-wrap authored artwork.
+    # Print is UV-mapped onto package surfaces rather than mounted as separate label plates.
+    product_objects, chilled_objects = build_merchandise(size)
+    parts.extend(product_objects)
     flush("ProductDisplays")
-
-    # Chiller shelves receive their own rows of drinks so the refrigerated wall
-    # reads as stocked merchandise even before individual products are interactive.
-    for cabinet in range(4):
-        cabinet_x = -5.85 + cabinet * 0.92
-        for shelf_index, shelf_z in enumerate((0.68, 1.34, 2.0, 2.66)):
-            for item in range(4):
-                drink_x = cabinet_x - 0.25 + item * 0.16
-                drink_y = 4.28
-                drink_material = package_mats[(cabinet + shelf_index + item) % 3]
-                if item % 2 == 0:
-                    obj = cylinder("Chiller bottle", (drink_x, drink_y, shelf_z + 0.15), 0.052, 0.28, drink_material, 12)
-                    parts.append(obj)
-                    obj = cylinder("Chiller bottle cap", (drink_x, drink_y, shelf_z + 0.305), 0.030, 0.035, mats["light"], 10)
-                    parts.append(obj)
-                else:
-                    obj = cylinder("Chiller can", (drink_x, drink_y, shelf_z + 0.105), 0.055, 0.21, drink_material, 12)
-                    parts.append(obj)
-                    obj = cylinder("Chiller can top", (drink_x, drink_y, shelf_z + 0.215), 0.053, 0.010, mats["metal"], 12)
-                    parts.append(obj)
-
+    parts.extend(chilled_objects)
     flush("ChillerMerchandise")
 
     # Warm ceiling fixtures sit just below the roof plane.
