@@ -224,10 +224,13 @@ def build_store_kit(size, output, preview):
 
     if preview:
         scene = bpy.context.scene
-        scene.render.engine = "BLENDER_EEVEE"
-        scene.render.resolution_x = 1200
-        scene.render.resolution_y = 900
-        scene.render.resolution_percentage = 70
+        scene.render.engine = "CYCLES"
+        scene.cycles.device = "CPU"
+        scene.cycles.samples = 16
+        scene.cycles.use_denoising = True
+        scene.render.resolution_x = 1000
+        scene.render.resolution_y = 750
+        scene.render.resolution_percentage = 65
         scene.render.image_settings.file_format = "PNG"
         scene.render.filepath = os.path.abspath(preview)
         scene.view_settings.view_transform = "Standard"
