@@ -491,7 +491,8 @@ def build_merchandise(size=256):
 
     parts = []
     gondolas = (-2.35, 2.35)
-    shelves = (0.76, 1.45, 2.14)
+    # Product bases sit just above the actual gondola shelf tops (0.6075, 1.2975, 1.9875).
+    shelves = (0.615, 1.305, 1.995)
     for gondola_index, gx in enumerate(gondolas):
         for row, shelf_z in enumerate(shelves):
             for face in (-1, 1):
@@ -520,8 +521,10 @@ def build_merchandise(size=256):
     # Refrigerated wall: smaller, detailed drink cans and PET bottles rather than blank cylinders.
     chilled = []
     for cabinet in range(4):
-        cabinet_x = -5.85 + cabinet * 0.92
-        for shelf_index, shelf_z in enumerate((0.68, 1.34, 2.0, 2.66)):
+        # Match the exact cooler centers in retail_store_kit.py; the previous
+        # offset placed bottles into the mullion gaps between neighboring doors.
+        cabinet_x = -5.70 + cabinet * 0.94
+        for shelf_index, shelf_z in enumerate((0.685, 1.325, 1.965, 2.605)):
             for item in range(4):
                 x = cabinet_x - 0.25 + item * 0.16
                 origin = (x, 4.28, shelf_z)
