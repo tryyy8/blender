@@ -403,12 +403,17 @@ def build_store_kit(size, output, preview):
         world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.24, 0.29, 0.30, 1)
         world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.55
 
-        bpy.ops.object.camera_add(location=(15.5, -22.0, 16.0))
+        # Interior cutaway preview: hide only the ceiling so the generated fixtures
+        # can be reviewed. The in-game ceiling remains part of the exported GLB.
+        ceiling = bpy.data.objects.get("Interior ceiling roof")
+        if ceiling:
+            ceiling.hide_render = True
+        bpy.ops.object.camera_add(location=(-1.5, -3.4, 1.85))
         camera = bpy.context.object
-        camera.name = "Retail kit preview camera"
-        target = Vector((0.0, 0.0, 1.55))
+        camera.name = "Retail kit interior fixture preview camera"
+        target = Vector((-4.45, 4.35, 1.05))
         camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
-        camera.data.lens = 48
+        camera.data.lens = 42
         scene.camera = camera
 
         for name, location, energy, size_value in (
