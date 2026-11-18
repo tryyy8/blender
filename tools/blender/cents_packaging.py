@@ -518,6 +518,15 @@ def build_merchandise(size=256):
                     else:
                         _deli_tub(origin, angle, scale, art["deli"], deli_lid, deli_cup, parts)
 
+    # Compact impulse merchandise is modeled as real wrapped packages rather than
+    # the former colored placeholder blocks on the checkout display.
+    for index, artwork in enumerate((art["bar"], art["chips"], art["deli"])):
+        _pillow_pack(
+            (6.76 + index * 0.14, -3.52, 1.365), 0.0, 0.58,
+            artwork, foil, parts, height=0.17, width=0.12, depth=0.035,
+            name="Checkout impulse wrapped snack"
+        )
+
     # Refrigerated wall: smaller, detailed drink cans and PET bottles rather than blank cylinders.
     chilled = []
     for cabinet in range(4):
