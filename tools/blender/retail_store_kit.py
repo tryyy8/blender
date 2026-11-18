@@ -1,10 +1,10 @@
-"""Generate a reusable, modular small-retail interior kit for CENTS asset studies.
+"""Generate the production convenience-store environment used by the CENTS game.
 
 This is generic Blender tooling. Store-specific branding, product identity, and game
 configuration belong in the private CENTS repository.
 
 Run:
-  blender --background --python tools/blender/retail_store_kit.py -- --output /tmp/retail-store-kit.glb
+  blender --background --python tools/blender/retail_store_kit.py -- --output /tmp/retail-store-kit.glb --cooler-asset /tmp/double-glass-door-beverage-cooler.glb
 """
 import argparse
 import math
@@ -109,7 +109,6 @@ def join_by_material(objects, label):
 
 def import_cc0_beverage_cooler(filepath, center):
     """Import and flatten one CC0 double-door commercial cooler at real-world scale."""
-    before = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=os.path.abspath(filepath))
     imported = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
     if not imported:
@@ -301,7 +300,7 @@ def build_store_kit(size, output, preview, cooler_asset=None):
     if not cooler_asset or not os.path.isfile(cooler_asset):
         raise RuntimeError("A downloaded CC0 cooler asset is required for the production store.")
     for cooler_x in (-5.55, -4.30, -3.05):
-        parts.append(import_cc0_beverage_cooler(cooler_asset, (cooler_x, 5.48, 1.00)))
+        parts.append(import_cc0_beverage_cooler(cooler_asset, (cooler_x, 5.36, 1.00)))
     flush("Chillers")
 
     # Checkout island: customer side faces the entrance (-Y), cashier controls face
