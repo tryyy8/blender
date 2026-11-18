@@ -205,6 +205,31 @@ def _solid(name, color, roughness=0.5, metallic=0.0):
     return material
 
 
+def _consolidate_product(parts, start, label):
+    """Join every modeled component of one SKU into a single export object."""
+    members = [obj for obj in parts[start:] if obj and obj.name in bpy.data.objects]
+    if not members:
+        raise RuntimeError("Product generator emitted no geometry: " + label)
+    if len(members) > 1:
+        bpy.ops.object.select_all(action="DESELECT")
+        for obj in members:
+            obj.select_set(True)
+        bpy.context.view_layer.objects.active = members[0]
+        bpy.ops.object.join()
+    product = bpy.context.view_layer.objects.active
+    product.name = "CENTS SKU - " + label
+    product.data.name = product.name + " mesh"
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    parts[start:] = [product]
+    return product
+
+
+def _emit_product(parts, builder, label, *args, **kwargs):
+    start = len(parts)
+    builder(*args, parts=parts, **kwargs)
+    return _consolidate_product(parts, start, label)
+
+
 def _finish(obj, origin, angle, scale, parts):
     obj.location = origin
     obj.rotation_euler[2] = angle
@@ -324,7 +349,7 @@ def _can(origin, angle, scale, art, metal, ink, parts):
         (0.288, 0.063, 0.063), (0.296, 0.057, 0.057)
     )
     _lathe("330 ml formed aluminum can", profile, art, origin, angle, scale, parts, 48)
-    _cylinder("Can recessed base", 0.055, 0.008, metal, 0.006, origin, angle, scale, parts, 40)
+    _cylinder("Can recessed base", 0.067, 0.010, metal, 0.006, origin, angle, scale, parts, 48, 0.002)
     _torus("Can lower rolled seam", 0.062, 0.004, 0.018, metal, origin, angle, scale, parts)
     _cylinder("Can lid", 0.057, 0.006, metal, 0.298, origin, angle, scale, parts, 40)
     _torus("Can top rolled rim", 0.057, 0.004, 0.296, metal, origin, angle, scale, parts)
@@ -341,7 +366,8 @@ def _soda_bottle(origin, angle, scale, art, cap, plastic, parts):
         (0.294, 0.033, 0.039), (0.337, 0.033, 0.039),
         (0.345, 0.030, 0.036)
     )
-    _lathe("PET bottle with sloped shoulder", profile, art, origin, angle, scale, parts, 40)
+    _lathe("PET bottle with sloped shoulder", profile, art, origin, angle, scale, parts, 48)
+    _cylinder("Bottle molded bottom closure", 0.058, 0.012, plastic, 0.008, origin, angle, scale, parts, 48, 0.003)
     _torus("Bottle heel bead", 0.047, 0.003, 0.018, plastic, origin, angle, scale, parts)
     _torus("Bottle neck support ring", 0.034, 0.003, 0.333, plastic, origin, angle, scale, parts)
     _cylinder("Bottle tamper band", 0.034, 0.016, cap, 0.344, origin, angle, scale, parts, 32, 0.002)
@@ -436,7 +462,30 @@ def _pillow_pack(origin, angle, scale, art, foil, parts, height=0.34, width=0.19
                 c = b + nx + 1
                 d = a + nx + 1
                 faces.append((a,b,c,d) if side == 1 else (d,c,b,a))
-    obj = _mesh_object(name + " printed film", vertices, faces, art, uvs, smooth=True)
+    # Close the two printed faces with real perimeter film instead of leaving
+    # independent paper-thin sheets. Each edge is stitched into a continuous bag.
+    front_start, back_start = 0, (nz + 1) * (nx + 1)
+    for ix in range(nx):
+        a, b = front_start + ix, front_start + ix + 1
+        c, d = back_start + ix + 1, back_start + ix
+        faces.append((a, b, c, d))
+        a = front_start + nz * (nx + 1) + ix
+        b = a + 1
+        c = back_start + nz * (nx + 1) + ix + 1
+        d = c - 1
+        faces.append((d, c, b, a))
+    for iz in range(nz):
+        a = front_start + iz * (nx + 1)
+        b = a + nx + 1
+        c = back_start + (iz + 1) * (nx + 1)
+        d = back_start + iz * (nx + 1)
+        faces.append((a, b, c, d))
+        a = front_start + iz * (nx + 1) + nx
+        b = a + nx + 1
+        c = back_start + (iz + 1) * (nx + 1) + nx
+        d = back_start + iz * (nx + 1) + nx
+        faces.append((d, c, b, a))
+    obj = _mesh_object(name + " sealed printed film shell", vertices, faces, art, uvs, smooth=True)
     _finish(obj, origin, angle, scale, parts)
 
     # Heat-sealed crimp jaws, side welds and a folded bottom gusset.
@@ -460,7 +509,8 @@ def _deli_tub(origin, angle, scale, art, lid, cup, parts):
         (0.045, 0.061, 0.061), (0.175, 0.077, 0.077),
         (0.191, 0.079, 0.079)
     )
-    _lathe("Tapered chilled deli cup with printed wrap", profile, art, origin, angle, scale, parts, 40)
+    _lathe("Tapered chilled deli cup with printed wrap", profile, art, origin, angle, scale, parts, 48)
+    _cylinder("Deli cup sealed bottom", 0.055, 0.012, cup, 0.012, origin, angle, scale, parts, 48, 0.002)
     _torus("Cup foot bead", 0.054, 0.003, 0.018, cup, origin, angle, scale, parts)
     _torus("Snap lid lower locking lip", 0.078, 0.004, 0.191, lid, origin, angle, scale, parts)
     _cylinder("Deli cup snap lid", 0.078, 0.012, lid, 0.199, origin, angle, scale, parts, 40, 0.003)
@@ -492,7 +542,7 @@ def build_merchandise(size=256):
     parts = []
     gondolas = (-2.35, 2.35)
     # Product bases sit just above the actual gondola shelf tops (0.6075, 1.2975, 1.9875).
-    shelves = (0.615, 1.305, 1.995)
+    shelves = (0.605, 1.295, 1.985)
     for gondola_index, gx in enumerate(gondolas):
         for row, shelf_z in enumerate(shelves):
             for face in (-1, 1):
@@ -504,43 +554,46 @@ def build_merchandise(size=256):
                     kind = (item + row * 2 + gondola_index * 3) % 7
                     origin = (x, y, shelf_z)
                     if kind == 0:
-                        _can(origin, angle, scale, art["can"], metal, dark_metal, parts)
+                        _emit_product(parts, _can, "EMBER COLA CAN", origin, angle, scale, art["can"], metal, dark_metal)
                     elif kind == 1:
-                        _soda_bottle(origin, angle, scale, art["soda"], orange_cap, plastic, parts)
+                        _emit_product(parts, _soda_bottle, "SUNBURST PET BOTTLE", origin, angle, scale, art["soda"], orange_cap, plastic)
                     elif kind == 2:
-                        _ketchup(origin, angle, scale, art["ketchup"], red_cap, plastic, parts)
+                        _emit_product(parts, _ketchup, "RED LABEL SQUEEZE BOTTLE", origin, angle, scale, art["ketchup"], red_cap, plastic)
                     elif kind == 3:
-                        _carton(origin, angle, scale, art["milk"], carton_side, orange_cap, parts)
+                        _emit_product(parts, _carton, "MEADOW HOUSE CARTON", origin, angle, scale, art["milk"], carton_side, orange_cap)
                     elif kind == 4:
-                        _pillow_pack(origin, angle, scale, art["chips"], foil, parts, height=0.34, width=0.19, depth=0.055, name="Kettle chip stand pouch")
+                        _emit_product(parts, _pillow_pack, "CRISP CLUB POTATO CHIPS", origin, angle, scale, art["chips"], foil, height=0.34, width=0.19, depth=0.055, name="Kettle chip stand pouch")
                     elif kind == 5:
-                        _pillow_pack(origin, angle, scale, art["bar"], foil, parts, height=0.15, width=0.22, depth=0.035, name="Chocolate foil pillow pack")
+                        _emit_product(parts, _pillow_pack, "NOCTURNE CHOCOLATE BAR", origin, angle, scale, art["bar"], foil, height=0.15, width=0.22, depth=0.035, name="Chocolate foil pillow pack")
                     else:
-                        _deli_tub(origin, angle, scale, art["deli"], deli_lid, deli_cup, parts)
+                        _emit_product(parts, _deli_tub, "DELI FRESH PASTA CUP", origin, angle, scale, art["deli"], deli_lid, deli_cup)
 
     # Compact impulse merchandise is modeled as real wrapped packages rather than
     # the former colored placeholder blocks on the checkout display.
     for index, artwork in enumerate((art["bar"], art["chips"], art["deli"])):
-        _pillow_pack(
+        _emit_product(
+            parts, _pillow_pack, "CHECKOUT IMPULSE SNACK " + str(index + 1),
             (6.76 + index * 0.14, -3.52, 1.365), 0.0, 0.58,
-            artwork, foil, parts, height=0.17, width=0.12, depth=0.035,
+            artwork, foil, height=0.17, width=0.12, depth=0.035,
             name="Checkout impulse wrapped snack"
         )
 
-    # Refrigerated wall: smaller, detailed drink cans and PET bottles rather than blank cylinders.
+    # Two double-door merchandisers, two bays per cabinet, four adjustable shelves.
+    # Every item is centered inside its own door bay and rests just above the deck.
     chilled = []
-    for cabinet in range(4):
-        # Match the exact cooler centers in retail_store_kit.py; the previous
-        # offset placed bottles into the mullion gaps between neighboring doors.
-        cabinet_x = -5.70 + cabinet * 0.94
-        for shelf_index, shelf_z in enumerate((0.685, 1.325, 1.965, 2.605)):
-            for item in range(4):
-                x = cabinet_x - 0.25 + item * 0.16
-                origin = (x, 4.28, shelf_z)
-                angle = -math.pi / 2  # product artwork faces out through the refrigerator door.
-                scale = 0.78
-                if (cabinet + shelf_index + item) % 2 == 0:
-                    _can(origin, angle, scale, art["can"], metal, dark_metal, chilled)
-                else:
-                    _soda_bottle(origin, angle, scale, art["soda"], orange_cap, plastic, chilled)
+    cabinet_centers = (-5.20, -3.32)
+    shelf_levels = (0.725, 1.365, 2.005, 2.645)
+    for cabinet, cabinet_x in enumerate(cabinet_centers):
+        for door, door_offset in enumerate((-0.435, 0.435)):
+            bay_center = cabinet_x + door_offset
+            for shelf_index, shelf_z in enumerate(shelf_levels):
+                for item in range(4):
+                    x = bay_center - 0.27 + item * 0.18
+                    origin = (x, 4.42, shelf_z)
+                    angle = -math.pi / 2
+                    scale = 0.90
+                    if (cabinet + door + shelf_index + item) % 2 == 0:
+                        _emit_product(chilled, _can, "CHILLED EMBER COLA CAN", origin, angle, scale, art["can"], metal, dark_metal)
+                    else:
+                        _emit_product(chilled, _soda_bottle, "CHILLED SUNBURST PET BOTTLE", origin, angle, scale, art["soda"], orange_cap, plastic)
     return parts, chilled
