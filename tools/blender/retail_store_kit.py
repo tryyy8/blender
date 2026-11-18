@@ -302,15 +302,15 @@ def build_store_kit(size, output, preview):
     add("Checkout fascia inset timber panel", (5.55, -4.482, 0.55), (1.65, 0.026, 0.30), mats["wood"], 0.022)
     for side_x in (4.00, 7.10):
         add("Checkout end cap accent", (side_x, -3.72, 0.61), (0.055, 1.08, 0.82), checkout_accent, 0.022)
-    add("Checkout cashier-side drawer face", (5.70, -3.075, 0.78), (1.15, 0.045, 0.25), fridge_trim, 0.022)
+    add("Checkout cashier-side drawer face", (5.70, -3.075, 0.78), (1.15, 0.045, 0.25), mats["metal"], 0.022)
     add("Checkout drawer pull", (5.70, -3.045, 0.79), (0.32, 0.035, 0.055), mats["metal"], 0.018)
     cylinder("Checkout drawer lock", (6.22, -3.025, 0.79), 0.028, 0.018, mats["light"], vertices=24, rotation=(math.pi/2,0,0))
     # Conveyor belt with exposed roller grooves and raised side rails.
     add("Checkout conveyor belt", (5.00, -3.72, 1.292), (1.16, 0.94, 0.025), rubber, 0.018)
     for roller_y in (-4.12,-3.98,-3.84,-3.70,-3.56,-3.42,-3.28):
-        add("Conveyor roller highlight", (5.00, roller_y, 1.308), (1.04, 0.012, 0.008), fridge_trim, 0.004)
+        add("Conveyor roller highlight", (5.00, roller_y, 1.308), (1.04, 0.012, 0.008), mats["metal"], 0.004)
     for x in (4.40, 5.60):
-        add("Conveyor end stop", (x, -3.72, 1.325), (0.045, 0.98, 0.055), fridge_trim, 0.012)
+        add("Conveyor end stop", (x, -3.72, 1.325), (0.045, 0.98, 0.055), mats["metal"], 0.012)
     # Recessed scanner glass with a machined surround and visible scan window.
     add("Barcode scanner surround", (6.02, -3.72, 1.292), (0.44, 0.46, 0.055), mats["metal"], 0.025)
     add("Barcode scanner glass", (6.02, -3.72, 1.322), (0.32, 0.34, 0.012), screen, 0.012)
@@ -329,7 +329,7 @@ def build_store_kit(size, output, preview):
                 (0.065, 0.045, 0.018), mats["light"] if (row + col) % 3 else checkout_accent, 0.009)
     add("Contactless card reader", (6.65, -4.00, 1.40), (0.30, 0.24, 0.12), mats["metal"], 0.025)
     add("Card reader screen", (6.65, -3.93, 1.47), (0.20, 0.012, 0.065), screen, 0.008)
-    add("Receipt printer housing", (4.95, -3.28, 1.36), (0.34, 0.26, 0.12), fridge_trim, 0.025)
+    add("Receipt printer housing", (4.95, -3.28, 1.36), (0.34, 0.26, 0.12), mats["metal"], 0.025)
     add("Receipt output slot", (4.95, -3.14, 1.39), (0.19, 0.012, 0.018), rubber, 0.004)
     # A separate bagging wing with a raised guard and bag-holder rail.
     add("Bagging platform", (6.60, -4.05, 1.30), (0.70, 0.58, 0.055), counter_top, 0.025)
