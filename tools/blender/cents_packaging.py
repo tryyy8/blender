@@ -547,8 +547,8 @@ def build_merchandise(size=256):
 
     parts = []
     gondolas = (-2.35, 2.35)
-    # Product bases sit just above the actual gondola shelf tops (0.6075, 1.2975, 1.9875).
-    shelves = (0.605, 1.295, 1.985)
+    # Product bases sit just above the actual gondola shelf tops (0.4575, 0.9475, 1.4375).
+    shelves = (0.462, 0.952, 1.442)
     for gondola_index, gx in enumerate(gondolas):
         for row, shelf_z in enumerate(shelves):
             for face in (-1, 1):
