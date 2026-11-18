@@ -47,6 +47,22 @@ def make_glass(name, color=(0.22, 0.31, 0.32), roughness=0.11, metallic=0.12, op
     return material
 
 
+def make_emissive(name, color):
+    material = bpy.data.materials.new(name)
+    material.diffuse_color = (*color, 1.0)
+    material.use_nodes = True
+    bsdf = material.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (*color, 1.0)
+    bsdf.inputs["Roughness"].default_value = 0.28
+    emission_input = bsdf.inputs.get("Emission Color") or bsdf.inputs.get("Emission")
+    if emission_input:
+        emission_input.default_value = (*color, 1.0)
+    strength_input = bsdf.inputs.get("Emission Strength")
+    if strength_input:
+        strength_input.default_value = 1.0
+    return material
+
+
 def cube(name, location, dimensions, material, bevel=0.025):
     bpy.ops.mesh.primitive_cube_add(size=1, location=location)
     obj = bpy.context.object
@@ -182,6 +198,7 @@ def build_store_kit(size, output, preview):
     fridge_trim = make_material("Cooler brushed stainless trim", "metal", (0.39, 0.44, 0.42), 0.30, 0.68, size)
     fridge_gasket = make_material("Cooler charcoal door gasket", "painted", (0.035, 0.052, 0.050), 0.78, size=size)
     fridge_glass = make_glass("Cooler low-iron insulated clear door glass", (0.72, 0.88, 0.87), 0.075, 0.02, 0.14)
+    fridge_led = make_emissive("Cooler cool-white interior LED", (0.70, 0.86, 0.92))
     for i in range(4):
         x = -5.70 + i * 0.94
         # Hollow insulated cabinet: side walls, crown, toe deck and rear liner.
@@ -215,52 +232,59 @@ def build_store_kit(size, output, preview):
                 add("Cooler shelf support", (x + support_x, 4.47, shelf_z - 0.045), (0.025, 0.58, 0.07), fridge_trim, 0.008)
         # Vertical cold-white light channels inside each door reveal.
         for light_x in (-0.335, 0.335):
-            add("Cooler LED channel", (x + light_x, 4.035, 1.70), (0.022, 0.035, 2.40), mats["light"], 0.010)
+            add("Cooler luminous vertical LED channel", (x + light_x, 4.035, 1.70), (0.022, 0.035, 2.40), fridge_led, 0.010)
     flush("Chillers")
 
-    # Designed checkout island: laminated counter, inset conveyor/scanner zone,
-    # cashier-side drawer stack, customer-facing fascia and articulated POS hardware.
-    counter_top = make_material("Checkout warm quartz laminate", "concrete", (0.66, 0.58, 0.45), 0.34, size=size)
-    rubber = make_material("Checkout belt rubber", "painted", (0.045, 0.055, 0.052), 0.84, size=size)
+    # Checkout island: customer side faces the entrance (-Y), cashier controls face
+    # the operator side (+Y). The fixture has a layered counter, belt, scan well,
+    # cash drawer, payment hardware and a separate bagging wing.
+    counter_top = make_material("Checkout warm quartz laminate", "concrete", (0.70, 0.62, 0.49), 0.30, size=size)
+    rubber = make_material("Checkout conveyor belt rubber", "painted", (0.035, 0.045, 0.043), 0.88, size=size)
+    checkout_accent = make_material("Checkout deep evergreen enamel", "painted", (0.075, 0.22, 0.19), 0.42, size=size)
     screen = make_glass("Checkout display glass", (0.055, 0.105, 0.11), 0.18, 0.18, 0.96)
     add("Checkout sculpted cabinet", (5.55, -3.72, 0.58), (3.35, 1.30, 1.16), mats["wood"], 0.095)
     add("Checkout toe plinth", (5.55, -3.72, 0.105), (3.18, 1.18, 0.16), mats["metal"], 0.045)
     add("Checkout worktop slab", (5.55, -3.72, 1.205), (3.62, 1.48, 0.15), counter_top, 0.060)
-    add("Checkout customer fascia", (5.55, -2.995, 0.58), (3.05, 0.055, 0.72), mats["paint"], 0.035)
-    add("Checkout fascia brass reveal", (5.55, -2.958, 0.90), (2.84, 0.025, 0.035), mats["light"], 0.012)
-    # Conveyor belt and raised end stops.
+    add("Checkout customer fascia", (5.55, -4.445, 0.58), (3.05, 0.055, 0.72), checkout_accent, 0.035)
+    add("Checkout fascia brass reveal", (5.55, -4.482, 0.91), (2.84, 0.025, 0.035), mats["light"], 0.012)
+    add("Checkout fascia inset timber panel", (5.55, -4.482, 0.55), (1.65, 0.026, 0.30), mats["wood"], 0.022)
+    for side_x in (4.00, 7.10):
+        add("Checkout end cap accent", (side_x, -3.72, 0.61), (0.055, 1.08, 0.82), checkout_accent, 0.022)
+    add("Checkout cashier-side drawer face", (5.70, -3.075, 0.78), (1.15, 0.045, 0.25), fridge_trim, 0.022)
+    add("Checkout drawer pull", (5.70, -3.045, 0.79), (0.32, 0.035, 0.055), mats["metal"], 0.018)
+    cylinder("Checkout drawer lock", (6.22, -3.025, 0.79), 0.028, 0.018, mats["light"], vertices=24, rotation=(math.pi/2,0,0))
+    # Conveyor belt with exposed roller grooves and raised side rails.
     add("Checkout conveyor belt", (5.00, -3.72, 1.292), (1.16, 0.94, 0.025), rubber, 0.018)
+    for roller_y in (-4.12,-3.98,-3.84,-3.70,-3.56,-3.42,-3.28):
+        add("Conveyor roller highlight", (5.00, roller_y, 1.308), (1.04, 0.012, 0.008), fridge_trim, 0.004)
     for x in (4.40, 5.60):
         add("Conveyor end stop", (x, -3.72, 1.325), (0.045, 0.98, 0.055), fridge_trim, 0.012)
-    # Recessed scanner glass with a metal surround and a distinct scan window.
+    # Recessed scanner glass with a machined surround and visible scan window.
     add("Barcode scanner surround", (6.02, -3.72, 1.292), (0.44, 0.46, 0.055), mats["metal"], 0.025)
     add("Barcode scanner glass", (6.02, -3.72, 1.322), (0.32, 0.34, 0.012), screen, 0.012)
-    # Cash drawer, lock cylinder and handle are on the cashier side.
-    add("Cash drawer face", (5.70, -4.365, 0.78), (1.15, 0.045, 0.25), fridge_trim, 0.022)
-    add("Cash drawer pull", (5.70, -4.395, 0.79), (0.32, 0.035, 0.055), mats["metal"], 0.018)
-    cylinder("Cash drawer lock", (6.22, -4.405, 0.79), 0.028, 0.018, mats["light"], vertices=24, rotation=(math.pi/2,0,0))
-    # Main till display with a sculpted stand and a tilted, framed screen.
+    # Main till display with a sculpted stand and a framed operator-facing screen.
     add("POS swivel pedestal", (4.55, -3.66, 1.40), (0.20, 0.22, 0.20), mats["metal"], 0.035)
     add("POS neck", (4.55, -3.66, 1.54), (0.09, 0.10, 0.22), mats["metal"], 0.025)
     add("POS monitor housing", (4.55, -3.61, 1.72), (0.52, 0.13, 0.40), mats["metal"], 0.045)
     add("POS active display", (4.55, -3.535, 1.73), (0.43, 0.018, 0.30), screen, 0.022)
     add("POS lower bezel", (4.55, -3.52, 1.515), (0.52, 0.035, 0.045), mats["metal"], 0.012)
-    # Separate keypad and card reader, angled toward the customer.
-    add("POS keypad body", (4.95, -3.40, 1.39), (0.32, 0.27, 0.075), mats["metal"], 0.025)
+    add("POS monitor rear cover seam", (4.55, -3.685, 1.72), (0.40, 0.018, 0.27), checkout_accent, 0.018)
+    # Customer-facing keypad/card reader, angled toward the queue.
+    add("POS keypad body", (4.95, -3.98, 1.39), (0.32, 0.27, 0.075), mats["metal"], 0.025)
     for row in range(3):
         for col in range(3):
-            add("POS tactile key", (4.84 + col * 0.105, -3.48 + row * 0.075, 1.435),
-                (0.065, 0.045, 0.018), mats["light"] if (row + col) % 3 else mats["paint"], 0.009)
-    add("Contactless card reader", (6.65, -3.43, 1.40), (0.30, 0.24, 0.12), mats["metal"], 0.025)
-    add("Card reader screen", (6.65, -3.39, 1.47), (0.20, 0.012, 0.065), screen, 0.008)
-    add("Receipt printer housing", (4.95, -3.90, 1.36), (0.34, 0.26, 0.12), fridge_trim, 0.025)
-    add("Receipt output slot", (4.95, -4.035, 1.39), (0.19, 0.012, 0.018), rubber, 0.004)
-    # Bagging platform and a compact queue-side impulse tray.
+            add("POS tactile key", (4.84 + col * 0.105, -4.06 + row * 0.075, 1.435),
+                (0.065, 0.045, 0.018), mats["light"] if (row + col) % 3 else checkout_accent, 0.009)
+    add("Contactless card reader", (6.65, -4.00, 1.40), (0.30, 0.24, 0.12), mats["metal"], 0.025)
+    add("Card reader screen", (6.65, -3.93, 1.47), (0.20, 0.012, 0.065), screen, 0.008)
+    add("Receipt printer housing", (4.95, -3.28, 1.36), (0.34, 0.26, 0.12), fridge_trim, 0.025)
+    add("Receipt output slot", (4.95, -3.14, 1.39), (0.19, 0.012, 0.018), rubber, 0.004)
+    # A separate bagging wing with a raised guard and bag-holder rail.
     add("Bagging platform", (6.60, -4.05, 1.30), (0.70, 0.58, 0.055), counter_top, 0.025)
+    add("Bagging guard", (6.60, -3.75, 1.40), (0.68, 0.035, 0.18), checkout_accent, 0.014)
+    add("Bag-holder upright", (6.85, -3.88, 1.53), (0.035, 0.035, 0.38), mats["metal"], 0.010)
+    add("Bag-holder crossbar", (6.75, -3.88, 1.70), (0.42, 0.035, 0.035), mats["metal"], 0.010)
     add("Impulse display base", (6.90, -3.52, 1.31), (0.42, 0.48, 0.08), mats["metal"], 0.020)
-    for item in range(3):
-        add("Checkout impulse product plinth", (6.75 + item * 0.15, -3.52, 1.39),
-            (0.11, 0.20, 0.12), mats["packaging_a" if item == 0 else "packaging_b" if item == 1 else "packaging_c"], 0.018)
     flush("Checkout")
 
     # Compact backroom partition and stock shelving behind the service zone.
@@ -285,17 +309,7 @@ def build_store_kit(size, output, preview):
     # satin bezels and serviceable end caps. All hardware clears the ceiling underside.
     light_trim = make_material("Recessed light satin aluminum", "metal", (0.43, 0.48, 0.44), 0.24, 0.72, size)
     light_reveal = make_material("Recessed light dark reveal", "painted", (0.035, 0.045, 0.043), 0.72, size=size)
-    light_emitter = bpy.data.materials.new("CENTS warm white LED diffuser emission")
-    light_emitter.use_nodes = True
-    light_bsdf = light_emitter.node_tree.nodes.get("Principled BSDF")
-    light_bsdf.inputs["Base Color"].default_value = (1.0, 0.88, 0.68, 1.0)
-    light_bsdf.inputs["Roughness"].default_value = 0.24
-    emission_input = light_bsdf.inputs.get("Emission Color") or light_bsdf.inputs.get("Emission")
-    if emission_input:
-        emission_input.default_value = (1.0, 0.82, 0.58, 1.0)
-    strength_input = light_bsdf.inputs.get("Emission Strength")
-    if strength_input:
-        strength_input.default_value = 1.0
+    light_emitter = make_emissive("CENTS warm white LED diffuser emission", (1.0, 0.82, 0.58))
     for x in (-4.8, 0.0, 4.8):
         for y in (-2.65, 1.75):
             add("LED troffer recessed housing", (x, y, 4.005), (2.18, 0.72, 0.075), light_reveal, 0.055)
