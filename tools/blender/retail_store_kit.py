@@ -149,11 +149,11 @@ def import_cc0_beverage_cooler(filepath, center):
 
 def build_store_kit(size, output, preview, cooler_asset=None):
     mats = {
-        "plaster": make_material("Retail warm plaster", "plaster", (0.72, 0.66, 0.55), 0.88, size=size),
+        "plaster": make_material("Classic store warm ivory wall", "plaster", (0.82, 0.78, 0.69), 0.88, size=size),
         "paint": make_material("Retail painted accent", "painted", (0.13, 0.31, 0.29), 0.72, size=size),
-        "wood": make_material("Retail warm timber", "wood", (0.34, 0.21, 0.12), 0.62, size=size),
+        "wood": make_material("Checkout warm oak laminate", "wood", (0.48, 0.32, 0.20), 0.58, size=size),
         "metal": make_material("Retail powder coated metal", "metal", (0.12, 0.15, 0.15), 0.38, 0.52, size),
-        "concrete": make_material("Retail concrete floor", "concrete", (0.43, 0.42, 0.38), 0.90, size=size),
+        "concrete": make_material("Classic light stone floor", "concrete", (0.58, 0.57, 0.52), 0.86, size=size),
         "glass": make_glass("Retail refrigerator and storefront glass"),
         "light": make_material("Retail warm ceiling finish", "painted", (0.91, 0.83, 0.66), 0.58, size=size),
         "packaging_a": make_material("Packaging coral", "painted", (0.73, 0.25, 0.16), 0.66, size=size),
@@ -173,6 +173,14 @@ def build_store_kit(size, output, preview, cooler_asset=None):
 
     # Architectural shell: 16 x 12 m, 4.2 m clear interior height.
     add("Retail floor slab", (0, 0, -0.12), (16, 12, 0.24), mats["concrete"], 0.035)
+    floor_tile = make_material("Warm grey porcelain floor tile", "concrete", (0.62, 0.60, 0.55), 0.82, size=size)
+    floor_grout = make_material("Floor tile grout", "painted", (0.34, 0.35, 0.33), 0.92, size=size)
+    add("Store tiled floor finish", (0, 0, 0.018), (15.96, 11.96, 0.032), floor_tile, 0.006)
+    # Subtle 600 mm tile joints make the floor read as a maintained retail surface.
+    for ix in range(-13, 14):
+        add("Floor tile longitudinal grout", (ix * 0.60, 0, 0.036), (0.009, 11.90, 0.004), floor_grout, 0.001)
+    for iy in range(-10, 11):
+        add("Floor tile transverse grout", (0, iy * 0.60, 0.036), (15.90, 0.009, 0.004), floor_grout, 0.001)
     add("Rear wall", (0, 5.88, 2.1), (16, 0.24, 4.2), mats["plaster"], 0.045)
     add("Left wall", (-7.88, 0, 2.1), (0.24, 12, 4.2), mats["plaster"], 0.045)
     add("Right wall", (7.88, 0, 2.1), (0.24, 12, 4.2), mats["plaster"], 0.045)
@@ -181,6 +189,25 @@ def build_store_kit(size, output, preview, cooler_asset=None):
     add("Front fascia", (0, -5.88, 3.82), (10.25, 0.24, 0.76), mats["paint"], 0.035)
     # A real ceiling closes the room and makes the interior read as a store, not a cutaway.
     add("Interior ceiling roof", (0, 0, 4.16), (16, 12, 0.22), mats["light"], 0.035)
+    # Familiar convenience-store wall treatment: dark base trim and a continuous
+    # evergreen accent band, with light neutral plaster above and below.
+    wall_trim = make_material("Store deep green wall trim", "painted", (0.12, 0.25, 0.22), 0.60, size=size)
+    ceiling_grid = make_material("Acoustic ceiling grid", "metal", (0.63, 0.65, 0.61), 0.52, 0.22, size)
+    add("Rear wall baseboard", (0, 5.72, 0.14), (15.72, 0.07, 0.22), wall_trim, 0.012)
+    add("Left wall baseboard", (-7.72, 0, 0.14), (0.07, 11.72, 0.22), wall_trim, 0.012)
+    add("Right wall baseboard", (7.72, 0, 0.14), (0.07, 11.72, 0.22), wall_trim, 0.012)
+    add("Rear wall accent stripe", (0, 5.72, 2.72), (15.72, 0.07, 0.18), mats["paint"], 0.012)
+    add("Left wall accent stripe", (-7.72, 0, 2.72), (0.07, 11.72, 0.18), mats["paint"], 0.012)
+    add("Right wall accent stripe", (7.72, 0, 2.72), (0.07, 11.72, 0.18), mats["paint"], 0.012)
+    # Suspended acoustic ceiling grid, kept slim so the ceiling stays quiet.
+    for ix in range(-13, 14):
+        add("Ceiling grid main runner", (ix * 0.60, 0, 4.035), (0.012, 11.85, 0.012), ceiling_grid, 0.002)
+    for iy in range(-10, 11):
+        add("Ceiling grid cross runner", (0, iy * 0.60, 4.035), (15.85, 0.012, 0.012), ceiling_grid, 0.002)
+    # A practical entrance mat grounds the doorway and breaks up the open floor.
+    entrance_mat = make_material("Entrance mat charcoal rubber", "painted", (0.12, 0.14, 0.13), 0.92, size=size)
+    add("Entrance floor mat", (0, -5.02, 0.052), (2.75, 0.92, 0.045), entrance_mat, 0.025)
+    add("Entrance mat edge", (0, -5.50, 0.055), (2.82, 0.035, 0.025), wall_trim, 0.008)
     add("Entrance header", (0, -5.88, 0.18), (3.2, 0.24, 0.36), mats["metal"], 0.018)
     # Storefront glazing and a pair of framed entry leaves.
     for x in (-4.55, -2.55, 2.55, 4.55):
@@ -274,7 +301,7 @@ def build_store_kit(size, output, preview, cooler_asset=None):
     if not cooler_asset or not os.path.isfile(cooler_asset):
         raise RuntimeError("A downloaded CC0 cooler asset is required for the production store.")
     for cooler_x in (-5.55, -4.30, -3.05):
-        parts.append(import_cc0_beverage_cooler(cooler_asset, (cooler_x, 5.00, 1.00)))
+        parts.append(import_cc0_beverage_cooler(cooler_asset, (cooler_x, 5.48, 1.00)))
     flush("Chillers")
 
     # Checkout island: customer side faces the entrance (-Y), cashier controls face
@@ -379,8 +406,8 @@ def build_store_kit(size, output, preview, cooler_asset=None):
         scene = bpy.context.scene
         scene.render.engine = "CYCLES"
         scene.cycles.device = "CPU"
-        scene.cycles.samples = 32
-        scene.cycles.use_denoising = False
+        scene.cycles.samples = 64
+        scene.cycles.use_denoising = True
         scene.render.resolution_x = 1000
         scene.render.resolution_y = 750
         scene.render.resolution_percentage = 65
@@ -391,7 +418,7 @@ def build_store_kit(size, output, preview, cooler_asset=None):
         scene.world = world
         world.use_nodes = True
         world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.24, 0.29, 0.30, 1)
-        world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.55
+        world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.80
 
         # Interior cutaway preview: hide only the ceiling so the generated fixtures
         # can be reviewed. The in-game ceiling remains part of the exported GLB.
