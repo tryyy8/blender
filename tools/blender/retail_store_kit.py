@@ -27,6 +27,7 @@ def arguments():
     parser.add_argument("--output", required=True)
     parser.add_argument("--texture-size", type=int, default=256)
     parser.add_argument("--preview", default=None)
+    parser.add_argument("--cooler-asset", default=None)
     return parser.parse_args(argv)
 
 
@@ -106,7 +107,47 @@ def join_by_material(objects, label):
     return joined
 
 
-def build_store_kit(size, output, preview):
+def import_cc0_beverage_cooler(filepath, center):
+    """Import and flatten one CC0 double-door commercial cooler at real-world scale."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.abspath(filepath))
+    imported = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
+    if not imported:
+        raise RuntimeError("The CC0 beverage cooler import produced no mesh objects.")
+
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in imported:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = imported[0]
+    bpy.ops.object.join()
+    cooler = bpy.context.view_layer.objects.active
+    cooler.name = "CC0 double-door beverage cooler"
+    cooler.data.name = cooler.name + " mesh"
+
+    # Bake the imported hierarchy's world transforms before measuring or moving it.
+    cooler.data.transform(cooler.matrix_world.copy())
+    cooler.matrix_world.identity()
+    coords = [vertex.co.copy() for vertex in cooler.data.vertices]
+    minimum = Vector((min(v.x for v in coords), min(v.y for v in coords), min(v.z for v in coords)))
+    maximum = Vector((max(v.x for v in coords), max(v.y for v in coords), max(v.z for v in coords)))
+    dimensions = maximum - minimum
+    if min(dimensions) <= 0:
+        raise RuntimeError("The imported cooler has invalid dimensions: " + str(tuple(dimensions)))
+
+    # The source is authored at 1.2 x 0.787 x 2.0 m. Normalize only for
+    # harmless exporter/importer rounding; do not stretch the model.
+    scale = 2.0 / dimensions.z
+    source_center = (minimum + maximum) * 0.5
+    target_center = Vector(center)
+    for vertex in cooler.data.vertices:
+        vertex.co = (vertex.co - source_center) * scale + target_center
+    cooler.data.update()
+    cooler["asset_source"] = "Innerscene double glass-door beverage cooler"
+    cooler["asset_license"] = "CC0 1.0"
+    return cooler
+
+
+def build_store_kit(size, output, preview, cooler_asset=None):
     mats = {
         "plaster": make_material("Retail warm plaster", "plaster", (0.72, 0.66, 0.55), 0.88, size=size),
         "paint": make_material("Retail painted accent", "painted", (0.13, 0.31, 0.29), 0.72, size=size),
@@ -226,65 +267,14 @@ def build_store_kit(size, output, preview):
                 (0.055, 0.08, 1.66), wall_finish, 0.018)
         flush("Gondola" + str(gondola_index))
 
-    # Familiar glass-door beverage coolers, approximately 2.08 m tall.
-    cooler_shell = make_material("Cooler warm light enamel", "painted", (0.70, 0.72, 0.67), 0.52, size=size)
-    cooler_inner = make_material("Cooler bright interior enamel", "painted", (0.78, 0.81, 0.75), 0.66, size=size)
-    cooler_trim = make_material("Cooler satin aluminium", "metal", (0.58, 0.61, 0.58), 0.30, 0.42, size)
-    cooler_gasket = make_material("Cooler charcoal gasket", "painted", (0.13, 0.15, 0.14), 0.62, size=size)
-    cooler_glass = make_glass("Cooler clear low-reflection glass", (0.86, 0.94, 0.93), 0.035, 0.0, 0.025)
-    cooler_led = make_emissive("Cooler warm-white interior LED", (0.92, 0.88, 0.75))
-    cooler_dark = make_material("Cooler lower grille shadow", "painted", (0.18, 0.20, 0.19), 0.72, size=size)
-    cooler_header = make_material("Cooler modest green header", "painted", (0.17, 0.34, 0.29), 0.55, size=size)
-    for cabinet_index, cx in enumerate((-5.20, -3.32), start=1):
-        cabinet_width, front_y, rear_y = 1.78, 3.93, 5.30
-        center_y = 4.66
-        add("Cooler insulated left side", (cx - 0.845, center_y, 1.08), (0.09, 1.32, 1.98), cooler_shell, 0.025)
-        add("Cooler insulated right side", (cx + 0.845, center_y, 1.08), (0.09, 1.32, 1.98), cooler_shell, 0.025)
-        add("Cooler insulated roof", (cx, center_y, 2.08), (cabinet_width, 1.32, 0.12), cooler_shell, 0.025)
-        add("Cooler insulated floor", (cx, center_y, 0.17), (cabinet_width, 1.32, 0.22), cooler_shell, 0.025)
-        add("Cooler bright rear liner", (cx, rear_y - 0.055, 1.12),
-            (cabinet_width - 0.18, 0.08, 1.78), cooler_inner, 0.012)
-        add("Cooler lower compressor fascia", (cx, front_y + 0.10, 0.30),
-            (cabinet_width - 0.08, 0.20, 0.30), cooler_dark, 0.018)
-        for vent in range(15):
-            vx = cx - 0.66 + vent * 0.094
-            add("Cooler lower grille slot", (vx, front_y - 0.006, 0.30),
-                (0.035, 0.012, 0.17), cooler_trim, 0.004)
-        add("Cooler modest header fascia", (cx, front_y + 0.01, 1.99),
-            (cabinet_width - 0.08, 0.14, 0.20), cooler_header, 0.018)
-        add("Cooler header diffuser", (cx, front_y - 0.065, 1.99),
-            (cabinet_width - 0.20, 0.012, 0.10), cooler_led, 0.008)
-        add("Cooler centre door stile", (cx, front_y - 0.015, 1.18),
-            (0.038, 0.075, 1.58), cooler_trim, 0.008)
-        for door_index, dx in enumerate((-0.435, 0.435)):
-            door_x, door_width, door_center_z, door_height = cx + dx, 0.82, 1.18, 1.62
-            add("Cooler magnetic gasket", (door_x, front_y - 0.035, door_center_z),
-                (door_width, 0.045, door_height), cooler_gasket, 0.018)
-            add("Cooler clear glass panel", (door_x, front_y - 0.066, door_center_z),
-                (door_width - 0.045, 0.012, door_height - 0.045), cooler_glass, 0.006)
-            for edge_x in (-door_width/2, door_width/2):
-                add("Cooler slim vertical aluminium frame", (door_x + edge_x, front_y - 0.083, door_center_z),
-                    (0.025, 0.045, door_height), cooler_trim, 0.006)
-            for edge_z in (-door_height/2, door_height/2):
-                add("Cooler slim horizontal aluminium frame", (door_x, front_y - 0.083, door_center_z + edge_z),
-                    (door_width, 0.045, 0.026), cooler_trim, 0.006)
-            handle_x = door_x + (0.345 if door_index == 0 else -0.345)
-            add("Cooler short reachable pull", (handle_x, front_y - 0.115, 1.20),
-                (0.022, 0.055, 0.42), cooler_trim, 0.008)
-            hinge_x = door_x + (-0.39 if door_index == 0 else 0.39)
-            for hz in (0.58, 1.78):
-                add("Cooler compact hinge", (hinge_x, front_y - 0.08, hz),
-                    (0.035, 0.06, 0.10), cooler_trim, 0.008)
-        for shelf_z in (0.46, 0.86, 1.26, 1.64):
-            add("Cooler interior shelf deck", (cx, 4.57, shelf_z),
-                (cabinet_width - 0.22, 0.62, 0.025), cooler_trim, 0.006)
-            add("Cooler shelf front edge", (cx, 4.245, shelf_z + 0.020),
-                (cabinet_width - 0.25, 0.018, 0.035), cooler_shell, 0.004)
-        for light_x in (-0.79, 0.79):
-            add("Cooler interior side light", (cx + light_x, 4.12, 1.18),
-                (0.018, 0.025, 1.50), cooler_led, 0.006)
-        add("Cooler stainless toe kick", (cx, front_y - 0.025, 0.13),
-            (cabinet_width, 0.11, 0.13), cooler_trim, 0.014)
+    # Three CC0 double-door commercial beverage coolers form one continuous
+    # conventional convenience-store cold-drink wall. Each imported cabinet is
+    # 1.2 m wide and 2.0 m tall; the source asset supplies the glass, doors,
+    # interior shelves, condenser grille and unbranded display stock.
+    if not cooler_asset or not os.path.isfile(cooler_asset):
+        raise RuntimeError("A downloaded CC0 cooler asset is required for the production store.")
+    for cooler_x in (-5.55, -4.30, -3.05):
+        parts.append(import_cc0_beverage_cooler(cooler_asset, (cooler_x, 5.00, 1.00)))
     flush("Chillers")
 
     # Checkout island: customer side faces the entrance (-Y), cashier controls face
@@ -354,8 +344,8 @@ def build_store_kit(size, output, preview):
     product_objects, chilled_objects = build_merchandise(size)
     parts.extend(product_objects)
     flush("ProductDisplays")
-    parts.extend(chilled_objects)
-    flush("ChillerMerchandise")
+    # The imported commercial coolers already include stocked shelves; do not
+    # overlay a second set of products or create a mismatched duplicate display.
 
     # Distributed recessed LED panels: visible luminous diffusers, shallow housings,
     # satin bezels and serviceable end caps. All hardware clears the ceiling underside.
@@ -437,7 +427,7 @@ def main():
     options = arguments()
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
-    build_store_kit(options.texture_size, options.output, options.preview)
+    build_store_kit(options.texture_size, options.output, options.preview, options.cooler_asset)
 
 
 if __name__ == "__main__":
