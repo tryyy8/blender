@@ -178,7 +178,7 @@ def build_store_kit(size, output, preview):
             for slot_z in range(10):
                 add("Wall shelf adjustment slot", (x - side * 0.024, y - 0.032, 0.28 + slot_z * 0.16),
                     (0.008, 0.008, 0.052), shelf_trim, 0.002)
-        for z in (0.38, 0.91, 1.44):
+        for z in (0.38, 0.86, 1.34):
             add("Wall shelf shallow deck", (x, shelf_center_y, z), (0.62, shelf_length, 0.045), wall_finish, 0.012)
             add("Wall shelf slim ticket rail", (x - side * 0.305, shelf_center_y, z + 0.025),
                 (0.018, shelf_length - 0.05, 0.045), shelf_trim, 0.006)
@@ -206,7 +206,7 @@ def build_store_kit(size, output, preview):
             for face in (-1, 1):
                 add("Gondola compact end upright", (gx + face * 0.42, end_y, 0.92),
                     (0.045, 0.065, 1.70), shelf_trim, 0.010)
-        for z in (0.43, 0.99, 1.55):
+        for z in (0.43, 0.92, 1.41):
             for face in (-1, 1):
                 add("Gondola shallow shelf deck", (gx + face * 0.245, run_mid, z),
                     (0.47, run_length - 0.16, 0.055), wall_finish, 0.012)
@@ -275,7 +275,7 @@ def build_store_kit(size, output, preview):
             for hz in (0.58, 1.78):
                 add("Cooler compact hinge", (hinge_x, front_y - 0.08, hz),
                     (0.035, 0.06, 0.10), cooler_trim, 0.008)
-        for shelf_z in (0.50, 0.96, 1.42, 1.78):
+        for shelf_z in (0.46, 0.86, 1.26, 1.64):
             add("Cooler interior shelf deck", (cx, 4.57, shelf_z),
                 (cabinet_width - 0.22, 0.62, 0.025), cooler_trim, 0.006)
             add("Cooler shelf front edge", (cx, 4.245, shelf_z + 0.020),
