@@ -35,14 +35,15 @@ def make_material(name, family, color, roughness, metallic=0.0, size=256):
     return material_family(name, family, color, roughness, metallic, size=size, seed=seed)
 
 
-def make_glass(name, color=(0.22, 0.31, 0.32), roughness=0.11, metallic=0.12):
+def make_glass(name, color=(0.22, 0.31, 0.32), roughness=0.11, metallic=0.12, opacity=1.0):
     material = bpy.data.materials.new(name)
-    material.diffuse_color = (*color, 1)
+    material.diffuse_color = (*color, opacity)
     material.use_nodes = True
     bsdf = material.node_tree.nodes.get("Principled BSDF")
     bsdf.inputs["Base Color"].default_value = (*color, 1)
     bsdf.inputs["Roughness"].default_value = roughness
     bsdf.inputs["Metallic"].default_value = metallic
+    bsdf.inputs["Alpha"].default_value = opacity
     return material
 
 
@@ -180,16 +181,21 @@ def build_store_kit(size, output, preview):
     fridge_interior = make_material("Cooler interior enamel", "painted", (0.30, 0.39, 0.37), 0.48, size=size)
     fridge_trim = make_material("Cooler brushed stainless trim", "metal", (0.39, 0.44, 0.42), 0.30, 0.68, size)
     fridge_gasket = make_material("Cooler charcoal door gasket", "painted", (0.035, 0.052, 0.050), 0.78, size=size)
-    fridge_glass = make_glass("Cooler blue-green insulated door glass", (0.34, 0.49, 0.48), 0.20, 0.04)
+    fridge_glass = make_glass("Cooler low-iron insulated clear door glass", (0.72, 0.88, 0.87), 0.075, 0.02, 0.14)
     for i in range(4):
         x = -5.70 + i * 0.94
-        # Insulated cabinet body and projecting service plinth.
-        add("Cooler insulated carcass", (x, 4.68, 1.56), (0.88, 1.26, 3.08), mats["metal"], 0.075)
+        # Hollow insulated cabinet: side walls, crown, toe deck and rear liner.
+        # The old full-volume carcass and front inner-liner occluded the merchandise.
+        add("Cooler insulated left side wall", (x - 0.395, 4.68, 1.56), (0.09, 1.24, 3.00), mats["metal"], 0.045)
+        add("Cooler insulated right side wall", (x + 0.395, 4.68, 1.56), (0.09, 1.24, 3.00), mats["metal"], 0.045)
+        add("Cooler top insulation deck", (x, 4.68, 3.045), (0.88, 1.24, 0.11), mats["metal"], 0.035)
+        add("Cooler lower insulation deck", (x, 4.68, 0.075), (0.88, 1.24, 0.15), mats["metal"], 0.035)
         add("Cooler toe kick", (x, 4.015, 0.18), (0.82, 0.16, 0.28), fridge_gasket, 0.035)
         add("Cooler crown cap", (x, 4.66, 3.15), (0.91, 1.30, 0.13), fridge_trim, 0.035)
-        add("Cooler inner liner", (x, 4.015, 1.68), (0.73, 0.055, 2.54), fridge_interior, 0.012)
         add("Cooler rear insulation panel", (x, 5.255, 1.65), (0.76, 0.07, 2.78), fridge_interior, 0.018)
-        # Door assembly: dark continuous gasket, stainless frame and tinted glazing.
+        # Bright internal liner rails define a clean display cavity without blocking it.
+        for liner_x in (-0.335, 0.335):
+            add("Cooler interior liner rail", (x + liner_x, 4.62, 1.66), (0.025, 1.12, 2.52), fridge_interior, 0.010)
         add("Cooler magnetic door gasket", (x, 3.997, 1.66), (0.80, 0.075, 2.76), fridge_gasket, 0.045)
         add("Cooler glass door", (x, 3.945, 1.66), (0.735, 0.035, 2.68), fridge_glass, 0.028)
         for edge_x in (-0.382, 0.382):
@@ -216,7 +222,7 @@ def build_store_kit(size, output, preview):
     # cashier-side drawer stack, customer-facing fascia and articulated POS hardware.
     counter_top = make_material("Checkout warm quartz laminate", "concrete", (0.66, 0.58, 0.45), 0.34, size=size)
     rubber = make_material("Checkout belt rubber", "painted", (0.045, 0.055, 0.052), 0.84, size=size)
-    screen = make_glass("Checkout display glass", (0.055, 0.105, 0.11), 0.18, 0.18)
+    screen = make_glass("Checkout display glass", (0.055, 0.105, 0.11), 0.18, 0.18, 0.96)
     add("Checkout sculpted cabinet", (5.55, -3.72, 0.58), (3.35, 1.30, 1.16), mats["wood"], 0.095)
     add("Checkout toe plinth", (5.55, -3.72, 0.105), (3.18, 1.18, 0.16), mats["metal"], 0.045)
     add("Checkout worktop slab", (5.55, -3.72, 1.205), (3.62, 1.48, 0.15), counter_top, 0.060)
@@ -275,20 +281,32 @@ def build_store_kit(size, output, preview):
     parts.extend(chilled_objects)
     flush("ChillerMerchandise")
 
-    # Recessed linear LED troffers: stepped trim, deep shadow reveal, diffuser,
-    # end caps and subtle fasteners. The fixture sits just below the ceiling plane.
-    light_trim = make_material("Recessed light satin aluminum", "metal", (0.31, 0.35, 0.33), 0.29, 0.62, size)
-    light_reveal = make_material("Recessed light dark reveal", "painted", (0.045, 0.055, 0.052), 0.68, size=size)
-    for x in (-4.5, 0.0, 4.5):
-        add("LED troffer recessed housing", (x, 0.4, 4.035), (2.38, 0.34, 0.085), light_reveal, 0.055)
-        add("LED troffer perimeter bezel", (x, 0.4, 3.984), (2.27, 0.29, 0.035), light_trim, 0.038)
-        add("LED opal diffuser lens", (x, 0.4, 3.960), (2.13, 0.245, 0.018), mats["light"], 0.028)
-        for end_x in (-1.11, 1.11):
-            add("LED troffer end cap", (x + end_x, 0.4, 3.963), (0.035, 0.25, 0.028), light_trim, 0.010)
-        for fastener_x in (-0.98, 0.98):
-            for fastener_y in (-0.105, 0.105):
-                cylinder("LED troffer captive fastener", (x + fastener_x, 0.4 + fastener_y, 3.941),
-                    0.009, 0.006, mats["metal"], vertices=12)
+    # Distributed recessed LED panels: visible luminous diffusers, shallow housings,
+    # satin bezels and serviceable end caps. All hardware clears the ceiling underside.
+    light_trim = make_material("Recessed light satin aluminum", "metal", (0.43, 0.48, 0.44), 0.24, 0.72, size)
+    light_reveal = make_material("Recessed light dark reveal", "painted", (0.035, 0.045, 0.043), 0.72, size=size)
+    light_emitter = bpy.data.materials.new("CENTS warm white LED diffuser emission")
+    light_emitter.use_nodes = True
+    light_bsdf = light_emitter.node_tree.nodes.get("Principled BSDF")
+    light_bsdf.inputs["Base Color"].default_value = (1.0, 0.88, 0.68, 1.0)
+    light_bsdf.inputs["Roughness"].default_value = 0.24
+    emission_input = light_bsdf.inputs.get("Emission Color") or light_bsdf.inputs.get("Emission")
+    if emission_input:
+        emission_input.default_value = (1.0, 0.82, 0.58, 1.0)
+    strength_input = light_bsdf.inputs.get("Emission Strength")
+    if strength_input:
+        strength_input.default_value = 1.0
+    for x in (-4.8, 0.0, 4.8):
+        for y in (-2.65, 1.75):
+            add("LED troffer recessed housing", (x, y, 4.005), (2.18, 0.72, 0.075), light_reveal, 0.055)
+            add("LED troffer perimeter bezel", (x, y, 3.957), (2.10, 0.65, 0.035), light_trim, 0.045)
+            add("LED troffer luminous opal diffuser", (x, y, 3.932), (1.94, 0.49, 0.018), light_emitter, 0.045)
+            for end_x in (-1.02, 1.02):
+                add("LED troffer end cap", (x + end_x, y, 3.936), (0.035, 0.58, 0.028), light_trim, 0.010)
+            for fastener_x in (-0.91, 0.91):
+                for fastener_y in (-0.25, 0.25):
+                    cylinder("LED troffer captive fastener", (x + fastener_x, y + fastener_y, 3.914),
+                        0.009, 0.006, mats["metal"], vertices=12)
     flush("Lighting")
 
     # Modules remain separate for visibility culling and future interaction. Within each
