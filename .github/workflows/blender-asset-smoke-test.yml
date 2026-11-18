@@ -22,7 +22,6 @@ jobs:
     timeout-minutes: 35
     env:
       BLENDER_VERSION: 4.5.16
-      BLENDER_DIR: ${{ runner.temp }}/blender-4.5.16
     steps:
       - name: Check out asset generator
         uses: actions/checkout@v4
@@ -40,6 +39,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           set -euxo pipefail
+          BLENDER_DIR="$RUNNER_TEMP/blender-$BLENDER_VERSION"
           if [[ ! -x "$BLENDER_DIR/blender" ]]; then
             archive="$RUNNER_TEMP/blender-$BLENDER_VERSION-linux-x64.tar.xz"
             base="https://download.blender.org/release/Blender4.5"
