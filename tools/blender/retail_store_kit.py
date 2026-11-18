@@ -107,7 +107,7 @@ def join_by_material(objects, label):
     return joined
 
 
-def import_cc0_beverage_cooler(filepath, center):
+def import_cc0_beverage_cooler(filepath):
     """Import and flatten one CC0 double-door commercial cooler at real-world scale."""
     bpy.ops.import_scene.gltf(filepath=os.path.abspath(filepath))
     imported = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
@@ -137,9 +137,9 @@ def import_cc0_beverage_cooler(filepath, center):
     # harmless exporter/importer rounding; do not stretch the model.
     scale = 2.0 / dimensions.z
     source_center = (minimum + maximum) * 0.5
-    target_center = Vector(center)
     for vertex in cooler.data.vertices:
-        vertex.co = (vertex.co - source_center) * scale + target_center
+        vertex.co = (vertex.co - source_center) * scale
+    cooler.location = (0, 0, 0)
     cooler.data.update()
     cooler["asset_source"] = "Innerscene double glass-door beverage cooler"
     cooler["asset_license"] = "CC0 1.0"
@@ -299,9 +299,17 @@ def build_store_kit(size, output, preview, cooler_asset=None):
     # interior shelves, condenser grille and unbranded display stock.
     if not cooler_asset or not os.path.isfile(cooler_asset):
         raise RuntimeError("A downloaded CC0 cooler asset is required for the production store.")
-    for cooler_x in (-5.55, -4.30, -3.05):
-        parts.append(import_cc0_beverage_cooler(cooler_asset, (cooler_x, 5.36, 1.00)))
-    flush("Chillers")
+    cooler_template = import_cc0_beverage_cooler(cooler_asset)
+    for index, cooler_x in enumerate((-5.55, -4.30, -3.05)):
+        if index == 0:
+            cooler_instance = cooler_template
+        else:
+            # Linked mesh instances share the 5.6 MB source geometry and textures.
+            cooler_instance = cooler_template.copy()
+            cooler_instance.data = cooler_template.data
+            bpy.context.collection.objects.link(cooler_instance)
+        cooler_instance.name = "CC0 commercial beverage cooler " + str(index + 1)
+        cooler_instance.location = (cooler_x, 5.36, 1.00)
 
     # Checkout island: customer side faces the entrance (-Y), cashier controls face
     # the operator side (+Y). The fixture has a layered counter, belt, scan well,
