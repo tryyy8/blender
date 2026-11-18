@@ -1,4 +1,5 @@
 name: Blender Asset Pipeline Smoke Test
+# Blender LTS is pinned and restored from Actions cache before generation.
 
 on:
   workflow_dispatch:
