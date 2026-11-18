@@ -48,7 +48,7 @@ jobs:
               "$base/blender-$BLENDER_VERSION-linux-x64.tar.xz" -o "$archive"
             curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 --max-time 60 \
               "$base/blender-$BLENDER_VERSION.sha256" -o "$archive.sha256"
-            expected="$(grep -oE '^[0-9a-fA-F]{64}' "$archive.sha256" | head -n 1)"
+            expected="$(grep -F "blender-$BLENDER_VERSION-linux-x64.tar.xz" "$archive.sha256" | grep -oE '[0-9a-fA-F]{64}' | head -n 1)"
             test -n "$expected"
             echo "$expected  $archive" | sha256sum --check
             mkdir -p "$BLENDER_DIR"
