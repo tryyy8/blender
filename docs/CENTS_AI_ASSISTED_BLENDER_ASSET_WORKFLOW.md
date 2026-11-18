@@ -81,30 +81,50 @@ Use AI as a structured modeling and debugging assistant, not as a one-shot text-
 
 Keep a distinction between checks that can be automated (bounds, transforms, missing materials, object counts, file size) and checks that require visual evidence (commercial authenticity, visual hierarchy, believable contact, attractive proportions, readability).
 
-## 6. Current CENTS fixture pass: convenience-store proportion correction
+## 6. Current CENTS production-store direction
 
-The November 18, 2026 correction pass supersedes the oversized industrial-style fixture dimensions from the first rebuild. The earlier rebuild reached approximately 3.08 m for wall shelving and refrigerators and approximately 3.24 m for gondolas; those proportions were inappropriate for the small convenience-store setting and were rejected after in-game review.
+As of November 18, 2026, the convenience store is the actual game's production environment, not a temporary prototype, sample, or throwaway asset study. Do not describe the current store as a prototype. Design and review it as the first shippable store environment.
 
-The corrected generator uses these target dimensions and construction rules:
+The user has reset the visual direction to a classic, conventional convenience store. The previous Japanese-hybrid styling is explicitly dropped. Keep the existing low, light commercial shelving and the useful authored product families, but rebuild the surrounding store environment and replace the custom refrigerator design.
 
-- Wall shelving: approximately 1.86 m overall, three shallow open shelves at 0.38, 0.86, and 1.34 m, light warm-grey enamel, slim uprights, small ticket rails, and compact brackets.
-- Gondolas: approximately 1.70 m overall, low base, narrow centre spine, three double-sided shelves at 0.43, 0.92, and 1.41 m, modest end panels, no overhead sign gantry.
-- Reach-in coolers: approximately 2.08 m overall, pale insulated case, bright interior liner, four ordinary framed glass doors across the two cabinets, slim aluminium trim, short reachable pulls, restrained header, and low ventilation grille.
-- Merchandise bases are explicitly aligned to the revised shelf deck tops; chilled rows are lowered to fit within the approximately 2.08 m cabinets.
+### Preserve and refine
 
-The visual intent is conventional convenience-store equipment, not warehouse racking or futuristic display furniture. Keep dark metal limited to functional gasket/vent details; prioritize visible product facings and clear glass.
+- Keep the current convenience-store wall shelving and low double-sided gondolas, subject to visual review after the new store pass.
+- Preserve the existing authored SKU families where they are already working, including Ember Cola and the better-performing package designs.
+- Refine snack pouch construction so top heat seals and side seams physically overlap the pouch shell. A joined Blender object is not proof of connected geometry.
+- Derive every product origin from the actual shelf top plus a small clearance. Do not retain stale hard-coded elevations after changing fixture geometry.
 
-Source files changed:
-- `tools/blender/retail_store_kit.py`
-- `tools/blender/cents_packaging.py`
+### Replace
 
-Correction source commits:
-- `9d89c938d32b836bee16e4804b064f5bf94bb9a5` — initial proportion redesign.
-- `65d01d4ee75494efc30a7335744f403211f1336c` — first product height alignment.
-- `5321f58058be964d255b738d2987635306ab01a2` — final fixture shelf elevations.
-- `48f44f9b4f14afd9a877b65197aef2ec981b7329` — final merchandise placement alignment.
+- Replace the custom refrigerator construction with a suitable, commercially reusable, pre-generated glass-door beverage cooler asset when that produces a better result.
+- Current selected candidate: Innerscene's double glass-door beverage cooler, 1.2 x 0.787 x 2.0 m, white commercial cabinet, illuminated header, two glass doors, eight wire shelves, condenser grille, and unbranded display stock. It is released under CC0 1.0 and permits commercial use, modification, and redistribution.
+- Arrange three cabinets as a continuous beverage wall. Preserve the source model's sensible commercial construction instead of rebuilding it from primitive boxes.
+- Rebuild the surrounding store presentation as a classic convenience store: warm neutral interior, practical checkout, readable entrance/storefront, proper ceiling and lighting treatment, and a coherent merchandise layout. Avoid futuristic/Japanese-hybrid cues and oversized industrial fixtures.
 
-Validation is pending until the automated Blender workflow completes. The generated GLB must then be inspected in the actual CENTS renderer. The generated store preview must also be checked to ensure its camera shows the interior fixtures rather than only the exterior roof. Do not approve this pass from dimensions or a successful export alone.
+### Diagnosed defects and source changes
+
+The November 18 visual handoffs showed nearly opaque black refrigerator fronts, chilled products floating above the cases, and detached-looking pouch seams. Source inspection identified three concrete causes:
+
+1. The custom chilled product elevations did not match the cooler shelf elevations.
+2. The game loader applied glTF's default 0.5 alpha cutoff to BLEND materials, discarding low-opacity glass panels. glTF alphaCutoff is only meaningful for MASK materials.
+3. The snack pouch top seal and side seams were positioned outside the tapered film shell.
+
+Corrections:
+- `tools/blender/cents_packaging.py`: seal positions now follow the pouch shell; chilled merchandise elevations were aligned; gondola merchandise bases were aligned to the current deck tops.
+- `src/world/loadBlenderRetailStore.ts`: alpha cutoff is now zero for OPAQUE and BLEND materials, and defaults to 0.5 only for MASK materials.
+- `tests/glb-loader.test.js`: added coverage for the alpha-mode behavior.
+- `tools/blender/retail_store_kit.py`: imports the selected CC0 double-door cooler asset, places three commercial units, and avoids overlaying a duplicate set of chilled products.
+- `.github/workflows/blender-asset-smoke-test.yml`: downloads the CC0 source asset before Blender generation.
+
+Source commits:
+- `7c5a9eb3f9c700226092a7978155a2c9c60eae5c` — pouch seam and chilled product shelf alignment.
+- `c4f81d97c7b494b718b9c24f249dfd283f553f8b` — gondola product placement alignment.
+- `f4cf6d4e4952424731a6611cfac5361e6e52ad46` — import CC0 commercial cooler asset.
+- `4ad97028c4ab527871b710daded75fa024b8fe0d` — download the CC0 cooler in the Blender workflow.
+- CENTS `c7f79ed398e114b88435d258dfe828ad38fccab6` / `621a7c09ae498e673bdc4044a8c66d5e679b1ce4` — correct glTF alpha handling.
+- CENTS `e26241f6ae85fdae3225f8a8d0aac7cbca13e39b` — alpha-mode regression tests.
+
+The current Blender workflow run is pending. The asset must be inspected in Blender and then in the actual CENTS renderer. Do not approve the new coolers or the overall store from successful download, import, export, or build status alone.
 
 ## 7. Release checklist
 
