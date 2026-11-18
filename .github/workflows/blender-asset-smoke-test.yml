@@ -25,9 +25,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Blender
+        timeout-minutes: 10
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes blender python3-numpy
+          set -euxo pipefail
+          # Hosted runners already include apt indexes; refresh them with bounded network timeouts.
+          sudo timeout 240s apt-get update -qq \
+            -o Acquire::Retries=3 \
+            -o Acquire::http::Timeout=30 \
+            -o Acquire::https::Timeout=30
+          # Avoid pulling optional desktop/recommended packages into the headless CI runner.
+          sudo timeout 360s apt-get install --yes --no-install-recommends blender python3-numpy
+          blender --background --factory-startup --python-expr "import bpy; print('BLENDER_VERSION=' + bpy.app.version_string)"
 
       - name: Generate Blender assets
         run: |
