@@ -488,18 +488,24 @@ def _pillow_pack(origin, angle, scale, art, foil, parts, height=0.34, width=0.19
     obj = _mesh_object(name + " sealed printed film shell", vertices, faces, art, uvs, smooth=True)
     _finish(obj, origin, angle, scale, parts)
 
-    # Heat-sealed crimp jaws, side welds and a folded bottom gusset.
-    for z in (0.022, height + 0.018):
-        _bevel_box(name + " ribbed heat seal", (0.013, width * 1.04, 0.022),
-                   (0, 0, z), foil, angle, scale, parts, 0.004, product_origin=origin)
-        for rib in range(7):
-            y = -width * 0.42 + rib * width * 0.14
-            _bevel_box(name + " seal impression", (0.015, 0.003, 0.020),
-                       (0, y, z), art, angle, scale, parts, 0.001, product_origin=origin)
+    # Heat-sealed crimp jaws follow the actual tapered shell boundary. The former
+    # top seal sat above the pouch shoulder and the side welds sat outside the film,
+    # which made the package look like disconnected floating strips.
+    bottom_seal_z = 0.022 * 0.82
+    top_seal_z = (0.022 + height) * 0.82
     for side in (-1, 1):
-        _bevel_box(name + " vertical fin seal", (0.014, 0.010, height * 0.88),
-                   (0, side * width * 0.485, height * 0.50), foil, angle, scale, parts, 0.003, product_origin=origin)
-    _bevel_box(name + " base gusset", (depth * 0.95, width * 0.90, 0.012),
+        seal_x = side * depth * 0.28
+        for z in (bottom_seal_z, top_seal_z):
+            _bevel_box(name + " ribbed heat seal", (0.018, width * 0.88, 0.022),
+                       (seal_x, 0, z), foil, angle, scale, parts, 0.004, product_origin=origin)
+            for rib in range(7):
+                y = -width * 0.35 + rib * width * 0.116
+                _bevel_box(name + " seal impression", (0.003, 0.003, 0.014),
+                           (seal_x + side * 0.010, y, z), art, angle, scale, parts, 0.001, product_origin=origin)
+    for side in (-1, 1):
+        _bevel_box(name + " vertical fin seal", (0.014, 0.022, height * 0.80),
+                   (0, side * width * 0.42, 0.022 + height * 0.50), foil, angle, scale, parts, 0.003, product_origin=origin)
+    _bevel_box(name + " base gusset", (depth * 0.95, width * 0.84, 0.012),
                (0, 0, 0.018), foil, angle, scale, parts, 0.004, product_origin=origin)
 
 
@@ -582,7 +588,7 @@ def build_merchandise(size=256):
     # Every item is centered inside its own door bay and rests just above the deck.
     chilled = []
     cabinet_centers = (-5.20, -3.32)
-    shelf_levels = (0.725, 1.365, 2.005, 2.645)
+    shelf_levels = (0.475, 0.875, 1.275, 1.655)
     for cabinet, cabinet_x in enumerate(cabinet_centers):
         for door, door_offset in enumerate((-0.435, 0.435)):
             bay_center = cabinet_x + door_offset
