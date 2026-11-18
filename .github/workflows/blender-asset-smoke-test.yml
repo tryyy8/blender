@@ -19,28 +19,50 @@ concurrency:
 jobs:
   build-test-asset:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
+    env:
+      BLENDER_VERSION: 4.5.16
+      BLENDER_DIR: ${{ runner.temp }}/blender-4.5.16
     steps:
       - name: Check out asset generator
         uses: actions/checkout@v4
 
-      - name: Install Blender
-        timeout-minutes: 10
+      - name: Restore cached Blender LTS distribution
+        id: blender-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/blender-4.5.16
+          key: blender-${{ runner.os }}-4.5.16-linux-x64
+
+      - name: Install Blender when cache is missing
+        timeout-minutes: 12
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           set -euxo pipefail
-          # Hosted runners already include apt indexes; refresh them with bounded network timeouts.
-          sudo timeout 240s apt-get update -qq \
-            -o Acquire::Retries=3 \
-            -o Acquire::http::Timeout=30 \
-            -o Acquire::https::Timeout=30
-          # Avoid pulling optional desktop/recommended packages into the headless CI runner.
-          sudo timeout 360s apt-get install --yes --no-install-recommends blender python3-numpy
-          blender --background --factory-startup --python-expr "import bpy; print('BLENDER_VERSION=' + bpy.app.version_string)"
+          if [[ ! -x "$BLENDER_DIR/blender" ]]; then
+            archive="$RUNNER_TEMP/blender-$BLENDER_VERSION-linux-x64.tar.xz"
+            base="https://download.blender.org/release/Blender4.5"
+            curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 --max-time 900 \
+              "$base/blender-$BLENDER_VERSION-linux-x64.tar.xz" -o "$archive"
+            curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 --max-time 60 \
+              "$base/blender-$BLENDER_VERSION.sha256" -o "$archive.sha256"
+            expected="$(grep -oE '^[0-9a-fA-F]{64}' "$archive.sha256" | head -n 1)"
+            test -n "$expected"
+            echo "$expected  $archive" | sha256sum --check
+            mkdir -p "$BLENDER_DIR"
+            timeout 300s tar -xJf "$archive" -C "$BLENDER_DIR" --strip-components=1
+            rm -f "$archive" "$archive.sha256"
+          else
+            echo "Using cached Blender $BLENDER_VERSION distribution."
+          fi
+          echo "$BLENDER_DIR" >> "$GITHUB_PATH"
+          "$BLENDER_DIR/blender" --background --factory-startup --python-expr "import bpy; assert bpy.app.version_string.startswith('$BLENDER_VERSION'), bpy.app.version_string; print('BLENDER_VERSION=' + bpy.app.version_string)"
 
       - name: Generate Blender assets
+        timeout-minutes: 18
         run: |
+          set -euxo pipefail
           mkdir -p build/district01
           blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/district01/pipeline-smoke-test.glb
           blender --background --python tools/blender/district01_commercial_building.py -- --output build/district01/district01-commercial-building.glb
