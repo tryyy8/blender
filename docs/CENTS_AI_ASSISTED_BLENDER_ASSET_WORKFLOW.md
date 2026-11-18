@@ -81,25 +81,30 @@ Use AI as a structured modeling and debugging assistant, not as a one-shot text-
 
 Keep a distinction between checks that can be automated (bounds, transforms, missing materials, object counts, file size) and checks that require visual evidence (commercial authenticity, visual hierarchy, believable contact, attractive proportions, readability).
 
-## 6. Current CENTS fixture pass: implementation record
+## 6. Current CENTS fixture pass: convenience-store proportion correction
 
-The November 18, 2026 pass changed the source generators as follows:
+The November 18, 2026 correction pass supersedes the oversized industrial-style fixture dimensions from the first rebuild. The earlier rebuild reached approximately 3.08 m for wall shelving and refrigerators and approximately 3.24 m for gondolas; those proportions were inappropriate for the small convenience-store setting and were rejected after in-game review.
 
-- Replaced generic wall shelving with commercial steel wall bays: powder-coated uprights, adjustment slots, back panels, formed shelf decks/lips, brackets, ticket rails/labels, kick plates, and end caps.
-- Replaced generic gondolas with double-sided commercial runs: structural base, perforated center spine, end frames, slotted uprights, formed decks, shelf lips, ticket rails, individual tags, brackets, and top sign frames.
-- Rebuilt the refrigerator bank as two wide double-door reach-in merchandisers (four doors total), with insulated cabinet construction, rear liners, framed glass, mullions, gaskets, handles, hinges, louvres, header, internal standards, shelf supports, decks, and LED channels.
-- Updated chilled merchandise placement to match the two cabinets and their four door bays.
-- Added per-SKU Blender object consolidation and closed the perimeter geometry on flexible pillow packs; adjusted package closure geometry and shelf origins to match the new shelf deck heights.
+The corrected generator uses these target dimensions and construction rules:
+
+- Wall shelving: approximately 1.86 m overall, three shallow open shelves at 0.38, 0.86, and 1.34 m, light warm-grey enamel, slim uprights, small ticket rails, and compact brackets.
+- Gondolas: approximately 1.70 m overall, low base, narrow centre spine, three double-sided shelves at 0.43, 0.92, and 1.41 m, modest end panels, no overhead sign gantry.
+- Reach-in coolers: approximately 2.08 m overall, pale insulated case, bright interior liner, four ordinary framed glass doors across the two cabinets, slim aluminium trim, short reachable pulls, restrained header, and low ventilation grille.
+- Merchandise bases are explicitly aligned to the revised shelf deck tops; chilled rows are lowered to fit within the approximately 2.08 m cabinets.
+
+The visual intent is conventional convenience-store equipment, not warehouse racking or futuristic display furniture. Keep dark metal limited to functional gasket/vent details; prioritize visible product facings and clear glass.
 
 Source files changed:
 - `tools/blender/retail_store_kit.py`
 - `tools/blender/cents_packaging.py`
 
-The generator source commits for this pass are:
-- `4edf63846182f18909227989ba9c08d8ac5cf481` — commercial fixture rebuild.
-- `8854795381943d63d6421e8683e98c81c7e342eb` — merchandise consolidation and cooler placement.
+Correction source commits:
+- `9d89c938d32b836bee16e4804b064f5bf94bb9a5` — initial proportion redesign.
+- `65d01d4ee75494efc30a7335744f403211f1336c` — first product height alignment.
+- `5321f58058be964d255b738d2987635306ab01a2` — final fixture shelf elevations.
+- `48f44f9b4f14afd9a877b65197aef2ec981b7329` — final merchandise placement alignment.
 
-**Validation status at the time this document was written:** the Blender Actions run for `8854795` was still in progress during Blender installation. Therefore the rebuilt GLB, its final size, deployment into CENTS, and visual quality were not yet verified. Do not treat the implementation record as an approval of the resulting asset.
+Validation is pending until the automated Blender workflow completes. The generated GLB must then be inspected in the actual CENTS renderer. The generated store preview must also be checked to ensure its camera shows the interior fixtures rather than only the exterior roof. Do not approve this pass from dimensions or a successful export alone.
 
 ## 7. Release checklist
 
