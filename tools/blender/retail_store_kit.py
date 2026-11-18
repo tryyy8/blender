@@ -157,82 +157,171 @@ def build_store_kit(size, output, preview):
         add("Canopy bracket", (x, -6.02, 3.13), (0.10, 0.74, 0.62), mats["metal"], 0.025)
     flush("StoreShell")
 
-    # Wall-mounted shelving stops before the rear-left refrigeration bank.
-    # The former full-length left run overlapped the refrigerator cabinets.
+    # Commercial wall shelving: powder-coated uprights, slotted standards,
+    # adjustable cantilever brackets, formed steel decks and ticket channels.
+    slot_mat = make_material("Retail shelf perforated steel", "metal", (0.24, 0.28, 0.27), 0.42, 0.62, size)
+    shelf_deck = make_material("Retail shelf satin galvanized steel", "metal", (0.48, 0.52, 0.49), 0.34, 0.72, size)
+    shelf_edge = make_material("Retail shelf dark polymer price channel", "painted", (0.075, 0.095, 0.09), 0.42, size=size)
+    shelf_tag = make_material("Retail shelf ticket stock", "painted", (0.91, 0.86, 0.72), 0.76, size=size)
+
+    # Wall runs are genuine single-sided retail wall bays, with upright standards
+    # and folded steel shelves rather than timber planks.
     for side in (-1, 1):
         x = side * 6.55
         if side < 0:
             shelf_center_y, shelf_length, end_y = -0.35, 7.35, 3.325
         else:
             shelf_center_y, shelf_length, end_y = 0.0, 8.6, 4.0
-        for z in (0.42, 1.18, 1.94, 2.70):
-            add("Perimeter shelf", (x, shelf_center_y, z), (0.92, shelf_length, 0.10), mats["wood"], 0.022)
-            add("Perimeter shelf front nosing", (x, shelf_center_y - shelf_length * 0.5, z + 0.015),
-                (0.96, 0.055, 0.13), mats["paint"], 0.018)
         for y in (-4.0, end_y):
-            add("Shelf end panel", (x, y, 1.50), (0.16, 0.16, 3.0), mats["paint"], 0.025)
-        for z in (0.55, 1.31, 2.07, 2.83):
-            add("Shelf upright bracket", (x - side * 0.36, shelf_center_y, z),
-                (0.12, shelf_length - 0.20, 0.045), mats["metal"], 0.012)
-
+            add("Wall bay structural upright", (x, y, 1.55), (0.075, 0.095, 3.05), mats["metal"], 0.018)
+            for slot_z in range(14):
+                add("Wall standard punched slot", (x - side * 0.041, y, 0.48 + slot_z * 0.16),
+                    (0.012, 0.035, 0.075), shelf_edge, 0.005)
+        for z in (0.40, 1.12, 1.84, 2.56):
+            add("Wall bay formed steel shelf deck", (x, shelf_center_y, z),
+                (0.88, shelf_length, 0.075), shelf_deck, 0.018)
+            add("Wall bay folded shelf front lip", (x - side * 0.425, shelf_center_y, z + 0.047),
+                (0.055, shelf_length - 0.04, 0.085), shelf_edge, 0.012)
+            add("Wall bay continuous price ticket channel", (x - side * 0.462, shelf_center_y, z + 0.025),
+                (0.018, shelf_length - 0.10, 0.060), mats["metal"], 0.006)
+            for tag in range(12):
+                ty = shelf_center_y - shelf_length * 0.46 + tag * shelf_length * 0.083
+                add("Wall shelf individual price ticket", (x - side * 0.476, ty, z + 0.027),
+                    (0.012, 0.24, 0.043), shelf_tag, 0.003)
+            for bracket_y in (-shelf_length * 0.42, 0, shelf_length * 0.42):
+                add("Wall shelf cantilever bracket", (x - side * 0.27, shelf_center_y + bracket_y, z - 0.075),
+                    (0.42, 0.045, 0.045), mats["metal"], 0.010)
+        # A continuous perforated back panel makes the fixture read as a retail bay.
+        add("Wall bay perforated merchandising back", (x + side * 0.025, shelf_center_y, 1.60),
+            (0.045, shelf_length - 0.10, 2.82), slot_mat, 0.012)
+        for y in (-4.0, end_y):
+            add("Wall bay molded end cap", (x - side * 0.05, y, 1.52),
+                (0.12, 0.12, 3.08), mats["paint"], 0.025)
+        add("Wall bay bottom kick plate", (x - side * 0.10, shelf_center_y, 0.20),
+            (0.10, shelf_length, 0.28), mats["metal"], 0.025)
     flush("PerimeterShelving")
 
-    # Two double-sided gondolas preserve a generous central customer aisle.
-    for gondola_index, x in enumerate((-2.35, 2.35), start=1):
-        add("Gondola plinth", (x, 0.45, 0.18), (1.05, 6.8, 0.34), mats["metal"], 0.055)
-        for z in (0.56, 1.25, 1.94, 2.63):
-            add("Gondola shelf", (x, 0.45, z), (1.02, 6.55, 0.095), mats["wood"], 0.018)
+    # Double-sided gondola shelving: two commercial retail runs with a central
+    # perforated spine, structural end frames, adjustable brackets, formed decks,
+    # front price rails and branded top sign rails.
+    for gondola_index, gx in enumerate((-2.35, 2.35), start=1):
+        run_y0, run_y1 = -2.85, 3.75
+        run_length = run_y1 - run_y0
+        run_mid = (run_y0 + run_y1) * 0.5
+        add("Gondola structural base plinth", (gx, run_mid, 0.18),
+            (1.12, run_length + 0.16, 0.34), mats["metal"], 0.055)
+        add("Gondola central perforated spine", (gx, run_mid, 1.68),
+            (0.055, run_length, 2.88), slot_mat, 0.012)
+        for end_y in (run_y0, run_y1):
             for face in (-1, 1):
-                add("Shelf price rail", (x + face * 0.505, 0.45, z + 0.065), (0.035, 6.48, 0.075), mats["metal"], 0.012)
-                for tag in range(9):
-                    tag_y = -2.55 + tag * 0.72
-                    add("Shelf price ticket", (x + face * 0.527, tag_y, z + 0.065), (0.012, 0.25, 0.052), mats["light"], 0.004)
-        for y in (-2.85, 3.75):
-            add("Gondola upright", (x, y, 1.58), (1.08, 0.10, 2.95), mats["metal"], 0.025)
-        add("Gondola header rail", (x, 0.45, 3.12), (1.10, 6.65, 0.13), mats["paint"], 0.025)
+                add("Gondola end frame upright", (gx + face * 0.49, end_y, 1.62),
+                    (0.075, 0.10, 2.92), mats["metal"], 0.020)
+                for slot_z in range(16):
+                    add("Gondola upright adjustment slot", (gx + face * 0.45, end_y - 0.055, 0.48 + slot_z * 0.15),
+                        (0.012, 0.012, 0.060), shelf_edge, 0.004)
+        for z in (0.56, 1.25, 1.94, 2.63):
+            for face in (-1, 1):
+                add("Gondola formed steel shelf deck", (gx + face * 0.285, run_mid, z),
+                    (0.53, run_length - 0.20, 0.075), shelf_deck, 0.018)
+                add("Gondola folded front shelf lip", (gx + face * 0.545, run_mid, z + 0.047),
+                    (0.045, run_length - 0.22, 0.095), shelf_edge, 0.012)
+                add("Gondola continuous price ticket rail", (gx + face * 0.574, run_mid, z + 0.018),
+                    (0.018, run_length - 0.24, 0.064), mats["metal"], 0.006)
+                for tag in range(10):
+                    ty = run_y0 + 0.38 + tag * 0.61
+                    add("Gondola shelf price label", (gx + face * 0.588, ty, z + 0.020),
+                        (0.012, 0.24, 0.044), shelf_tag, 0.003)
+                for bracket_y in (run_y0 + 0.35, run_mid, run_y1 - 0.35):
+                    add("Gondola cantilever shelf bracket", (gx + face * 0.12, bracket_y, z - 0.075),
+                        (0.33, 0.045, 0.045), mats["metal"], 0.010)
+        add("Gondola upper sign frame", (gx, run_mid, 3.16),
+            (1.10, run_length + 0.10, 0.16), mats["paint"], 0.025)
+        for face in (-1, 1):
+            add("Gondola sign face insert", (gx + face * 0.56, run_mid, 3.16),
+                (0.018, 2.05, 0.105), shelf_tag, 0.008)
         flush("Gondola" + str(gondola_index))
 
-    # Four authored upright beverage coolers. Each cabinet has a layered carcass,
-    # recessed lit interior, gasketed door frame, hardware and formed shelf supports.
+    # Two full-width commercial reach-in merchandisers, each with paired
+    # insulated glass doors. The double-door format and refrigeration plinth,
+    # grille, mullions, header, gaskets and interior shelving establish a real
+    # convenience-store beverage cooler silhouette.
     fridge_interior = make_material("Cooler interior enamel", "painted", (0.30, 0.39, 0.37), 0.48, size=size)
     fridge_trim = make_material("Cooler brushed stainless trim", "metal", (0.39, 0.44, 0.42), 0.30, 0.68, size)
     fridge_gasket = make_material("Cooler charcoal door gasket", "painted", (0.035, 0.052, 0.050), 0.78, size=size)
-    fridge_glass = make_glass("Cooler low-iron insulated clear door glass", (0.72, 0.88, 0.87), 0.075, 0.02, 0.14)
-    fridge_led = make_emissive("Cooler cool-white interior LED", (0.70, 0.86, 0.92))
-    for i in range(4):
-        x = -5.70 + i * 0.94
-        # Hollow insulated cabinet: side walls, crown, toe deck and rear liner.
-        # The old full-volume carcass and front inner-liner occluded the merchandise.
-        add("Cooler insulated left side wall", (x - 0.395, 4.68, 1.56), (0.09, 1.24, 3.00), mats["metal"], 0.045)
-        add("Cooler insulated right side wall", (x + 0.395, 4.68, 1.56), (0.09, 1.24, 3.00), mats["metal"], 0.045)
-        add("Cooler top insulation deck", (x, 4.68, 3.045), (0.88, 1.24, 0.11), mats["metal"], 0.035)
-        add("Cooler lower insulation deck", (x, 4.68, 0.075), (0.88, 1.24, 0.15), mats["metal"], 0.035)
-        add("Cooler toe kick", (x, 4.015, 0.18), (0.82, 0.16, 0.28), fridge_gasket, 0.035)
-        add("Cooler crown cap", (x, 4.66, 3.15), (0.91, 1.30, 0.13), fridge_trim, 0.035)
-        add("Cooler rear insulation panel", (x, 5.255, 1.65), (0.76, 0.07, 2.78), fridge_interior, 0.018)
-        # Bright internal liner rails define a clean display cavity without blocking it.
-        for liner_x in (-0.335, 0.335):
-            add("Cooler interior liner rail", (x + liner_x, 4.62, 1.66), (0.025, 1.12, 2.52), fridge_interior, 0.010)
-        add("Cooler magnetic door gasket", (x, 3.997, 1.66), (0.80, 0.075, 2.76), fridge_gasket, 0.045)
-        add("Cooler glass door", (x, 3.945, 1.66), (0.735, 0.035, 2.68), fridge_glass, 0.028)
-        for edge_x in (-0.382, 0.382):
-            add("Cooler door stile", (x + edge_x, 3.915, 1.66), (0.045, 0.075, 2.75), fridge_trim, 0.018)
-        for edge_z in (0.285, 3.035):
-            add("Cooler door rail", (x, 3.915, edge_z), (0.78, 0.075, 0.055), fridge_trim, 0.018)
-        # Full-height pull handle, hinge barrels and subtle brand plaque.
-        add("Cooler vertical pull handle", (x + 0.285, 3.865, 1.72), (0.045, 0.075, 1.62), mats["light"], 0.020)
-        for hinge_z in (0.52, 1.62, 2.76):
-            add("Cooler hinge barrel", (x - 0.385, 3.96, hinge_z), (0.07, 0.10, 0.19), fridge_trim, 0.025)
-        add("Cooler top identity plaque", (x, 3.902, 2.94), (0.36, 0.018, 0.10), mats["paint"], 0.018)
-        # Shelves sit inside the cabinet, with front lips and side support pins.
-        for shelf_z in (0.66, 1.30, 1.94, 2.58):
-            add("Cooler interior shelf", (x, 4.48, shelf_z), (0.69, 0.58, 0.035), fridge_trim, 0.010)
-            add("Cooler shelf front lip", (x, 4.185, shelf_z + 0.025), (0.69, 0.035, 0.055), mats["light"], 0.012)
-            for support_x in (-0.33, 0.33):
-                add("Cooler shelf support", (x + support_x, 4.47, shelf_z - 0.045), (0.025, 0.58, 0.07), fridge_trim, 0.008)
-        # Vertical cold-white light channels inside each door reveal.
-        for light_x in (-0.335, 0.335):
-            add("Cooler luminous vertical LED channel", (x + light_x, 4.035, 1.70), (0.022, 0.035, 2.40), fridge_led, 0.010)
+    fridge_glass = make_glass("Cooler low-iron insulated clear door glass", (0.78, 0.91, 0.91), 0.045, 0.01, 0.10)
+    fridge_led = make_emissive("Cooler cool-white interior LED", (0.72, 0.88, 0.96))
+    fridge_dark = make_material("Cooler refrigeration vent dark", "painted", (0.025, 0.035, 0.034), 0.68, size=size)
+    fridge_header = make_material("Cooler illuminated header enamel", "painted", (0.075, 0.22, 0.20), 0.32, size=size)
+    for cabinet_index, cx in enumerate((-5.20, -3.32), start=1):
+        cabinet_width = 1.78
+        front_y, rear_y = 3.93, 5.30
+        center_y = 4.66
+        # Insulated shell with a true recessed cavity.
+        add("Merchandiser insulated left cheek", (cx - cabinet_width/2 + 0.055, center_y, 1.67),
+            (0.11, 1.38, 3.08), mats["metal"], 0.045)
+        add("Merchandiser insulated right cheek", (cx + cabinet_width/2 - 0.055, center_y, 1.67),
+            (0.11, 1.38, 3.08), mats["metal"], 0.045)
+        add("Merchandiser insulated roof", (cx, center_y, 3.19), (cabinet_width, 1.38, 0.16), mats["metal"], 0.045)
+        add("Merchandiser insulated floor", (cx, center_y, 0.14), (cabinet_width, 1.38, 0.24), mats["metal"], 0.045)
+        add("Merchandiser rear liner", (cx, rear_y - 0.055, 1.70), (cabinet_width - 0.22, 0.10, 2.92),
+            fridge_interior, 0.018)
+        # Recessed kick grille and service access panel.
+        add("Merchandiser lower service fascia", (cx, front_y + 0.12, 0.32),
+            (cabinet_width - 0.10, 0.22, 0.43), fridge_dark, 0.025)
+        for vent in range(19):
+            vx = cx - 0.78 + vent * 0.087
+            add("Merchandiser condenser ventilation louvre", (vx, front_y - 0.002, 0.34),
+                (0.012, 0.018, 0.27), fridge_trim, 0.004)
+        add("Merchandiser illuminated top header housing", (cx, front_y + 0.01, 3.10),
+            (cabinet_width - 0.06, 0.16, 0.30), fridge_header, 0.035)
+        add("Merchandiser header luminous diffuser", (cx, front_y - 0.078, 3.11),
+            (cabinet_width - 0.20, 0.018, 0.17), fridge_led, 0.015)
+        # A center mullion divides the two independent insulated glass doors.
+        add("Merchandiser central structural mullion", (cx, front_y - 0.015, 1.78),
+            (0.075, 0.12, 2.70), fridge_trim, 0.018)
+        for door_index, dx in enumerate((-0.435, 0.435)):
+            door_x = cx + dx
+            door_width = 0.82
+            add("Merchandiser continuous magnetic gasket", (door_x, front_y - 0.035, 1.78),
+                (door_width, 0.075, 2.67), fridge_gasket, 0.035)
+            add("Merchandiser insulated low-iron glass door", (door_x, front_y - 0.082, 1.78),
+                (door_width - 0.055, 0.018, 2.57), fridge_glass, 0.018)
+            for edge_x in (-door_width/2, door_width/2):
+                add("Merchandiser aluminum door extrusion", (door_x + edge_x, front_y - 0.10, 1.78),
+                    (0.045, 0.075, 2.68), fridge_trim, 0.014)
+            for edge_z in (0.445, 3.115):
+                add("Merchandiser horizontal door extrusion", (door_x, front_y - 0.10, edge_z),
+                    (door_width, 0.075, 0.052), fridge_trim, 0.014)
+            # Long recessed pull and three heavy-duty hinge barrels.
+            handle_x = door_x + (0.315 if door_index == 0 else -0.315)
+            add("Merchandiser full-height recessed pull handle", (handle_x, front_y - 0.145, 1.82),
+                (0.035, 0.075, 1.42), mats["light"], 0.016)
+            hinge_x = door_x + (-0.39 if door_index == 0 else 0.39)
+            for hz in (0.68, 1.78, 2.86):
+                add("Merchandiser heavy hinge barrel", (hinge_x, front_y - 0.10, hz),
+                    (0.075, 0.11, 0.17), fridge_trim, 0.022)
+        # Interior vertical standards, shelf support rails and four full-width decks.
+        for sx in (-0.78, 0.0, 0.78):
+            add("Merchandiser interior slotted shelf standard", (cx + sx, 4.82, 1.80),
+                (0.025, 0.035, 2.48), fridge_trim, 0.008)
+            for slot in range(15):
+                add("Merchandiser shelf standard slot", (cx + sx, 4.795, 0.66 + slot * 0.16),
+                    (0.012, 0.012, 0.065), fridge_dark, 0.003)
+        for shelf_z in (0.70, 1.34, 1.98, 2.62):
+            add("Merchandiser formed interior shelf deck", (cx, 4.57, shelf_z),
+                (cabinet_width - 0.25, 0.64, 0.035), fridge_trim, 0.010)
+            add("Merchandiser interior shelf front rail", (cx, 4.245, shelf_z + 0.035),
+                (cabinet_width - 0.28, 0.035, 0.065), mats["light"], 0.010)
+            for support_x in (-0.73, 0.73):
+                add("Merchandiser shelf support arm", (cx + support_x, 4.57, shelf_z - 0.055),
+                    (0.045, 0.60, 0.045), fridge_trim, 0.008)
+        # Vertical light channels are mounted behind the door opening, not in front of products.
+        for light_x in (-0.82, 0.82):
+            add("Merchandiser vertical LED channel", (cx + light_x, 4.06, 1.82),
+                (0.028, 0.035, 2.38), fridge_led, 0.012)
+        # Bottom kickplate and top cap unify the two doors into one commercial cabinet.
+        add("Merchandiser stainless toe kick", (cx, front_y - 0.035, 0.16),
+            (cabinet_width, 0.13, 0.20), fridge_trim, 0.025)
     flush("Chillers")
 
     # Checkout island: customer side faces the entrance (-Y), cashier controls face
