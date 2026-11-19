@@ -242,7 +242,7 @@ def build(options):
     ]
     for index, (x, y, yaw) in enumerate(shelf_positions, 1):
         place_fixture(shelf_path, "Premade approved grocery shelf run " + str(index), (x, y, 0), yaw, target_height=1.82)
-    place_fixture(shelf_path, "Premade approved perimeter grocery shelving", (3.80, 1.05, 0), 0.0, target_height=1.82)
+    place_fixture(shelf_path, "Premade approved perimeter grocery shelving", (3.75, 1.05, 0), 0.0, target_height=1.82)
 
     # Commercial CC0 two-door beverage coolers, imported intact rather than rebuilt from primitives.
     cooler_path = os.path.join(options.fixtures_dir, "double-glass-door-beverage-cooler.glb")
