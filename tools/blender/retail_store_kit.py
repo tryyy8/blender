@@ -439,23 +439,27 @@ def build_store_kit(size, output, preview):
         world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.24, 0.29, 0.30, 1)
         world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.80
 
-        # Interior cutaway preview: hide only the ceiling so the generated fixtures
-        # can be reviewed. The in-game ceiling remains part of the exported GLB.
+        # Production review render: a wide front-corner cutaway of the complete
+        # store. Hide only the ceiling roof so the layout and fixtures are visible;
+        # the exported in-game ceiling remains untouched.
         ceiling = bpy.data.objects.get("Interior ceiling roof")
         if ceiling:
             ceiling.hide_render = True
-        bpy.ops.object.camera_add(location=(-1.5, -3.4, 1.85))
+        target = Vector((0.0, 0.0, 1.55))
+        bpy.ops.object.camera_add(location=(19.5, -23.0, 18.0))
         camera = bpy.context.object
-        camera.name = "Retail kit interior fixture preview camera"
-        target = Vector((-4.45, 4.35, 1.05))
+        camera.name = "Production store wide review camera"
         camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
         camera.data.lens = 42
         scene.camera = camera
+        scene.view_settings.look = "Medium High Contrast"
+        scene.view_settings.exposure = 0.35
+        scene.view_settings.gamma = 1.0
 
         for name, location, energy, size_value in (
-            ("Large soft key", (1.0, -8.0, 15.0), 2600, 10.0),
-            ("Cool fill", (-10.0, -1.0, 9.0), 1500, 8.0),
-            ("Back rim", (3.0, 9.0, 12.0), 1900, 7.0)
+            ("Store soft key", (0.0, -10.0, 18.0), 5200, 12.0),
+            ("Store cool fill", (-12.0, -1.0, 11.0), 3400, 10.0),
+            ("Store rear fill", (2.0, 10.0, 14.0), 4200, 9.0)
         ):
             bpy.ops.object.light_add(type="AREA", location=location)
             light = bpy.context.object
@@ -465,6 +469,16 @@ def build_store_kit(size, output, preview):
             light.data.size = size_value
             light.rotation_euler = (target - light.location).to_track_quat("-Z", "Y").to_euler()
 
+        bpy.ops.render.render(write_still=True)
+        # A second low front view specifically checks the framed glazing and doors.
+        scene.render.filepath = os.path.abspath(preview).replace(".png", "-entrance.png")
+        bpy.ops.object.camera_add(location=(0.0, -17.0, 3.6))
+        entrance_camera = bpy.context.object
+        entrance_camera.name = "Production storefront entrance review camera"
+        entrance_target = Vector((0.0, -5.9, 1.75))
+        entrance_camera.rotation_euler = (entrance_target - entrance_camera.location).to_track_quat("-Z", "Y").to_euler()
+        entrance_camera.data.lens = 48
+        scene.camera = entrance_camera
         bpy.ops.render.render(write_still=True)
         print("Retail store kit preview rendered:", os.path.abspath(preview))
 
