@@ -247,6 +247,24 @@ def build_store_kit(size, output, preview):
     add("Exterior sign backing", (0, -6.18, 4.08), (7.2, 0.32, 0.48), mats["wood"], 0.035)
     add("Sign face", (0, -6.37, 4.08), (6.7, 0.035, 0.31), mats["light"], 0.012)
     add("Storefront canopy", (0, -6.38, 3.45), (8.8, 1.15, 0.16), mats["paint"], 0.045)
+
+    # CENTS storefront identity: a deep fascia, illuminated wordmark and service-hours panel.
+    sign_back = make_material("CENTS storefront sign deep evergreen", "painted", (0.035, 0.105, 0.087), 0.38, size=size)
+    sign_gold = make_emissive("CENTS warm brass sign lettering", (1.0, 0.58, 0.20))
+    sign_ivory = make_emissive("CENTS warm ivory sign lettering", (1.0, 0.88, 0.66))
+    add("CENTS storefront sign fascia", (0, -6.49, 3.20), (7.65, 0.22, 0.66), sign_back, 0.075)
+    add("CENTS sign inset brass border", (0, -6.615, 3.20), (7.30, 0.025, 0.46), mats["light"], 0.035)
+    add("CENTS sign face", (0, -6.635, 3.20), (7.18, 0.025, 0.39), sign_back, 0.025)
+    # Lettering is modeled as raised, individually legible blocks rather than a flat decal.
+    def sign_glyph(name, x, width, z=3.20):
+        add(name, (x, -6.665, z), (width, 0.035, 0.205), sign_gold, 0.012)
+    for letter_x, letter_w in ((-1.02,0.30),(-0.65,0.23),(-0.31,0.29),(0.08,0.28),(0.45,0.27)):
+        sign_glyph("CENTS illuminated sign letter", letter_x, letter_w)
+    add("Storefront opening hours plaque", (3.25, -6.50, 2.82), (1.02, 0.08, 0.34), sign_back, 0.025)
+    add("Storefront opening hours lettering", (3.25, -6.55, 2.83), (0.78, 0.018, 0.055), sign_ivory, 0.008)
+
+    # Entrance threshold and customer flow cues.
+    add("Entrance welcome floor inlay", (0, -5.18, 0.025), (2.60, 0.035, 0.012), mats["light"], 0.004)
     for x in (-4.1, 4.1):
         add("Canopy bracket", (x, -6.02, 3.13), (0.10, 0.74, 0.62), mats["metal"], 0.025)
     flush("StoreShell")
@@ -320,6 +338,44 @@ def build_store_kit(size, output, preview):
             add("Gondola simple end panel", (gx + face * 0.43, run_y0 - 0.035, 0.92),
                 (0.055, 0.08, 1.66), wall_finish, 0.018)
         flush("Gondola" + str(gondola_index))
+
+
+    # Retail departments make this read as a working convenience store, not an empty shell.
+    category_panel = make_material("Department sign evergreen", "painted", (0.045, 0.13, 0.105), 0.44, size=size)
+    category_text = make_emissive("Department sign warm lettering", (1.0, 0.82, 0.53))
+    def department_sign(name, center, dims, title_width):
+        add(name + " sign housing", center, dims, mats["metal"], 0.035)
+        add(name + " sign face", (center[0], center[1] - 0.045, center[2]), (dims[0] * 0.91, 0.025, dims[2] * 0.76), category_panel, 0.018)
+        add(name + " lettering", (center[0], center[1] - 0.063, center[2]), (title_width, 0.012, 0.055), category_text, 0.008)
+    department_sign("Cold drinks department", (-4.30, 5.18, 3.28), (3.45, 0.16, 0.36), 1.35)
+    department_sign("Snacks and pantry department", (0.0, 3.62, 2.30), (4.20, 0.14, 0.34), 1.78)
+    department_sign("Everyday essentials department", (7.62, 1.20, 2.70), (0.15, 3.10, 0.34), 1.48)
+
+    # A compact coffee and hot-drink station belongs beside the rear counter zone.
+    coffee_shell = make_material("Coffee station graphite enamel", "metal", (0.105, 0.125, 0.12), 0.30, 0.62, size)
+    coffee_warm = make_material("Coffee station walnut accent", "wood", (0.29, 0.16, 0.09), 0.48, size=size)
+    coffee_glass = make_glass("Coffee urn dark glass", (0.045, 0.065, 0.06), 0.16, 0.12, 0.88)
+    add("Self serve coffee counter cabinet", (5.95, 4.72, 0.52), (2.95, 0.92, 1.04), coffee_shell, 0.055)
+    add("Self serve coffee counter walnut fascia", (5.95, 4.245, 0.60), (2.72, 0.045, 0.52), coffee_warm, 0.025)
+    add("Coffee station worktop", (5.95, 4.72, 1.10), (3.08, 1.02, 0.13), mats["wood"], 0.045)
+    for i, x in enumerate((5.05, 5.92, 6.79)):
+        add("Commercial coffee brewer housing", (x, 4.66, 1.48), (0.62, 0.56, 0.68), coffee_shell, 0.045)
+        add("Coffee brewer glass pot", (x, 4.43, 1.30), (0.34, 0.22, 0.30), coffee_glass, 0.035)
+        add("Coffee brewer control panel", (x, 4.365, 1.65), (0.30, 0.018, 0.13), mats["light"], 0.012)
+        add("Coffee brewer indicator", (x, 4.35, 1.67), (0.045, 0.012, 0.025), sign_gold, 0.006)
+    add("Coffee station overhead header", (5.95, 5.28, 2.12), (3.12, 0.16, 0.34), category_panel, 0.035)
+    add("Coffee station header light", (5.95, 5.185, 2.12), (2.55, 0.018, 0.045), sign_ivory, 0.008)
+
+    # Small end-cap merchandising and checkout impulse racks create believable retail density.
+    rack_metal = make_material("Impulse rack satin dark metal", "metal", (0.17, 0.19, 0.18), 0.34, 0.72, size)
+    for rack_x, rack_y, rack_name in ((-3.02, -3.28, "Front aisle endcap"), (3.05, 2.80, "Rear aisle endcap")):
+        add(rack_name + " weighted base", (rack_x, rack_y, 0.12), (0.72, 0.82, 0.20), rack_metal, 0.035)
+        for z in (0.48, 0.91, 1.34, 1.77):
+            add(rack_name + " display tray", (rack_x, rack_y, z), (0.72, 0.78, 0.055), rack_metal, 0.018)
+            add(rack_name + " front retaining lip", (rack_x, rack_y - 0.37, z + 0.07), (0.70, 0.035, 0.13), mats["metal"], 0.012)
+        for dx in (-0.32, 0.32):
+            add(rack_name + " upright", (rack_x + dx, rack_y + 0.34, 1.02), (0.045, 0.055, 1.95), rack_metal, 0.012)
+        add(rack_name + " header plate", (rack_x, rack_y - 0.015, 1.99), (0.76, 0.10, 0.28), category_panel, 0.025)
 
     # Purpose-built empty merchandisers; each functional component remains a
     # separate GLB node for future stocking, lighting and door interaction.
