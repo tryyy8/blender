@@ -171,66 +171,24 @@ def build_detailed_cooler_bank(size):
 
 
 def build(options):
-    bpy.ops.object.select_all(action="SELECT")
+    """Assemble the CENTS sales floor from retained premade merchandising only.
+
+    The former generated room shell, ceiling, architectural lighting, queue rails,
+    coffee station, signage and supermarket-style checkout are deliberately not
+    emitted. They were the rejected previous store, not reusable store assets.
+    """
+    bpy.ops.object.select_all(action="SELECT)
     bpy.ops.object.delete(use_global=False)
     size = options.texture_size
-    # New palette and room proportions: 12 x 9 m, not the previous 16 x 12 layout.
-    wall = make_material("CENTS warm plaster", "plaster", (0.76, 0.72, 0.63), 0.9, size=size)
-    floor = make_material("CENTS warm terrazzo", "concrete", (0.48, 0.48, 0.43), 0.76, size=size)
-    dark = make_material("CENTS deep evergreen", "painted", (0.035, 0.13, 0.105), 0.42, size=size)
-    trim = make_material("CENTS graphite metal", "metal", (0.10, 0.13, 0.13), 0.36, 0.55, size)
-    brass = make_material("CENTS warm brass", "metal", (0.62, 0.39, 0.16), 0.32, 0.72, size)
-    glass = make_glass("CENTS storefront glazing", (0.25, 0.37, 0.39), 0.10, 0.04, 0.26)
-    ceiling = make_material("CENTS ceiling ivory", "painted", (0.86, 0.83, 0.75), 0.72, size=size)
-    glow = make_emissive("CENTS warm LED", (1.0, 0.79, 0.52))
-    parts = []
 
-    def add(*a, **kw):
-        o = cube(*a, **kw)
-        parts.append(o)
-        return o
-
-    # Shell: compact neighborhood convenience store with a clear sightline.
-    add("New store floor slab", (0, 0, -0.12), (12, 9, 0.24), floor, 0.035)
-    add("Rear wall", (0, 4.38, 2.15), (12, 0.24, 4.3), wall, 0.045)
-    add("Left wall", (-5.88, 0, 2.15), (0.24, 9, 4.3), wall, 0.045)
-    add("Right wall", (5.88, 0, 2.15), (0.24, 9, 4.3), wall, 0.045)
-    add("Front left pier", (-5.2, -4.38, 2.0), (1.6, 0.24, 4.0), wall, 0.035)
-    add("Front right pier", (5.2, -4.38, 2.0), (1.6, 0.24, 4.0), wall, 0.035)
-    add("Front sign canopy", (0, -4.52, 3.78), (9.0, 0.48, 0.55), dark, 0.055)
-    add("Front glazing left", (-3.2, -4.50, 1.9), (2.3, 0.055, 3.45), glass, 0.012)
-    add("Front glazing right", (3.2, -4.50, 1.9), (2.3, 0.055, 3.45), glass, 0.012)
-    add("Entry left glass leaf", (-0.56, -4.56, 1.78), (1.02, 0.065, 3.12), glass, 0.012)
-    add("Entry right glass leaf", (0.56, -4.56, 1.78), (1.02, 0.065, 3.12), glass, 0.012)
-    for x in (-4.38, -2.02, -1.14, 0, 1.14, 2.02, 4.38):
-        add("Storefront mullion", (x, -4.59, 1.9), (0.065, 0.10, 3.56), trim, 0.01)
-    add("Entry threshold", (0, -4.5, 0.035), (2.2, 0.36, 0.07), brass, 0.018)
-    add("Sign inset", (0, -4.79, 3.78), (6.8, 0.035, 0.38), dark, 0.025)
-    add_word("CENTS", (0, -4.82, 3.78), 0.43, glow)
-    ceiling_obj = add("Ceiling", (0, 0, 4.24), (12, 9, 0.20), ceiling, 0.025)
-    # Keep the roof as its own export node so preview renders can hide it without
-    # hiding the entire shell or blocking all interior lighting.
-    parts.remove(ceiling_obj)
-    # Restrained wall bands and baseboards give the room a finished retail fit-out.
-    add("Rear wall baseboard", (0, 4.22, 0.14), (11.7, 0.06, 0.20), dark, 0.01)
-    add("Rear wall brand band", (0, 4.22, 2.72), (11.7, 0.06, 0.16), dark, 0.01)
-    light_trim = make_material("Recessed light satin aluminum", "metal", (0.31, 0.35, 0.33), 0.29, 0.62, size)
-    light_reveal = make_material("Recessed light dark reveal", "painted", (0.045, 0.055, 0.052), 0.68, size=size)
-    for x in (-3.8, 0.0, 3.8):
-        for y in (-2.0, 1.65):
-            add("LED troffer recessed housing", (x, y, 4.035), (2.08, 0.34, 0.085), light_reveal, 0.055)
-            add("LED troffer perimeter bezel", (x, y, 3.984), (1.98, 0.29, 0.035), light_trim, 0.038)
-            add("LED opal diffuser lens", (x, y, 3.960), (1.84, 0.245, 0.018), glow, 0.028)
-            for end_x in (-0.96, 0.96):
-                add("LED troffer end cap", (x + end_x, y, 3.963), (0.035, 0.25, 0.028), light_trim, 0.010)
-
-    # Keep only the two established custom products. The scanned-brand catalogue is not used.
+    # Only the two approved authored SKUs survive the rebuild.
     product_objects, chilled = build_merchandise(size, minimal=True)
     keep = list(product_objects)
     if len(keep) != 2:
         raise RuntimeError("Minimal merchandise mode must produce exactly Ember Cola and Deli Fresh Pasta Salad")
 
-    # Import CC0 stocked steel gondola modules; their grocery stock is unbranded.
+    # Preserve the premade grocery shelving the user approved. No new shelf
+    # geometry or invented shelf stock is generated here.
     shelf_path = os.path.join(options.fixtures_dir, "grocery-shelf-run.glb")
     shelf_positions = [
         (-1.55, -1.05, math.pi / 2),
@@ -239,110 +197,44 @@ def build(options):
         (1.55, 1.05, math.pi / 2),
     ]
     for i, (x, y, yaw) in enumerate(shelf_positions, 1):
-        place_fixture(shelf_path, "CC0 grocery gondola section " + str(i), (x, y, 0), yaw, target_height=1.82)
-    # A matching perimeter wall display gives the store a stocked edge rather than
-    # leaving the right half of the sales floor as empty circulation space.
-    place_fixture(shelf_path, "CC0 right-wall grocery display", (4.65, 0.85, 0), 0.0, target_height=1.82)
+        place_fixture(shelf_path, "Approved premade grocery shelving " + str(i), (x, y, 0), yaw, target_height=1.82)
+    place_fixture(shelf_path, "Approved premade perimeter shelving", (4.65, 0.85, 0), 0.0, target_height=1.82)
 
-    # Proper checkout lane is a separate premade CC0 asset, replacing the old block-built desk.
-    checkout_path = os.path.join(options.fixtures_dir, "checkout-counter.glb")
-    place_fixture(checkout_path, "CC0 staffed checkout", (4.15, -2.45, 0), math.pi / 2, target_height=1.72)
-
-    # The retained four-bay cooler design is kept, with separately animatable glass doors.
-
-    # Retained products sit as distinct, real objects at the deli end of the counter.
-    # Their original meshes and materials remain untouched.
+    # Keep the approved products as separate objects for their existing game
+    # interactions; do not add the rejected generic catalogue.
     keep[0].location = (3.15, -1.35, 1.22)
     keep[1].location = (3.48, -1.35, 1.22)
 
-    # Checkout queue stanchions and impulse display define customer flow without blocking aisles.
-    for x in (2.55, 3.35):
-        add("Queue post weighted base", (x, -3.65, 0.08), (0.28, 0.28, 0.16), trim, 0.05)
-        add("Queue post upright", (x, -3.65, 0.54), (0.055, 0.055, 0.82), brass, 0.02)
-    add("Queue rail", (2.95, -3.65, 0.91), (0.82, 0.035, 0.035), brass, 0.015)
-
-    # Coffee/hot drinks are a small wall station, not a kitchen counter.
-    coffee = make_material("Coffee station enamel", "metal", (0.10, 0.13, 0.13), 0.30, 0.55, size)
-    wood = make_material("Coffee station walnut", "wood", (0.30, 0.18, 0.11), 0.52, size=size)
-    add("Coffee station base cabinet", (-4.65, 1.90, 0.52), (1.65, 0.68, 1.04), coffee, 0.05)
-    add("Coffee station counter", (-4.65, 1.90, 1.08), (1.78, 0.78, 0.12), wood, 0.035)
-    for x in (-5.15, -4.65, -4.15):
-        add("Commercial coffee brewer", (x, 1.82, 1.47), (0.38, 0.42, 0.66), coffee, 0.04)
-        add("Coffee brewer drip tray", (x, 1.58, 1.18), (0.32, 0.16, 0.035), brass, 0.01)
-    add("Coffee station header", (-4.65, 2.30, 2.05), (1.78, 0.12, 0.30), dark, 0.025)
-
-    # Store department signs: restrained and legible, not a supermarket-sized aisle system.
-    add("Cold drinks wall sign", (-2.9, 4.20, 3.15), (3.0, 0.08, 0.32), dark, 0.025)
-    add_word("COLD DRINKS", (-2.9, 4.14, 3.15), 0.16, glow)
-    add("Snacks and pantry sign", (0, 4.20, 3.45), (3.1, 0.08, 0.30), dark, 0.025)
-    add_word("SNACKS  •  PANTRY", (0, 4.14, 3.45), 0.15, glow)
-
-    # Keep the room modules separate; only the static shell is joined by material.
-    join_by_material(parts, "CENTS_RedesignedShell")
+    # Retain the existing cooler interaction assemblies, but do not recreate
+    # the previous room, floor, ceiling, lights, wall treatment or checkout.
     build_detailed_cooler_bank(size)
+
     bpy.ops.object.select_all(action="SELECT")
-    bpy.context.view_layer.objects.active = bpy.context.selected_objects[0]
+    selected = bpy.context.selected_objects
+    if selected:
+        bpy.context.view_layer.objects.active = selected[0]
     bpy.ops.export_scene.gltf(
         filepath=os.path.abspath(options.output), export_format="GLB",
         export_apply=True, export_texcoords=True, export_normals=True,
         export_materials="EXPORT", export_image_format="AUTO", export_yup=True
     )
-    print("CENTS redesigned convenience store exported:", os.path.abspath(options.output))
+    print("CENTS stripped-back merchandising scene exported:", os.path.abspath(options.output))
 
-    # Keep the roof in the exported GLB but hide it for the two interior review renders.
-    ceiling_obj.hide_render = True
+    # Keep the review output useful without reintroducing any room geometry.
     scene = bpy.context.scene
-    scene.render.engine = "CYCLES"
-    scene.cycles.device = "CPU"
-    scene.cycles.samples = 12
-    scene.cycles.use_denoising = True
+    scene.render.engine = "BLENDER_EEVEE_NEXT"
     scene.render.resolution_x = 1100
     scene.render.resolution_y = 825
     scene.render.resolution_percentage = 70
     scene.render.image_settings.file_format = "PNG"
     scene.view_settings.view_transform = "Standard"
-    scene.view_settings.look = "Medium High Contrast"
-    scene.view_settings.exposure = 0.25
-    world = bpy.data.worlds.new("CENTS retail preview world") if not scene.world else scene.world
-    scene.world = world
-    world.use_nodes = True
-    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.22, 0.26, 0.27, 1)
-    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.75
-    target = Vector((0, 0, 1.2))
-    for name, loc, energy, radius in (
-        ("Store key", (0, -7, 10), 2600, 8),
-        ("Store fill", (-7, 1, 7), 1800, 7),
-        ("Store rear", (5, 6, 8), 2100, 6),
-    ):
-        bpy.ops.object.light_add(type="AREA", location=loc)
-        light = bpy.context.object
-        light.name = name
-        light.data.energy = energy
-        light.data.shape = "DISK"
-        light.data.size = radius
-        light.rotation_euler = (target - light.location).to_track_quat("-Z", "Y").to_euler()
-
-    # Review renders must expose the interior rather than photograph the opaque roof.
-    # First view: standing just inside the entrance, looking down the shopping floor.
-    bpy.ops.object.camera_add(location=(-2.55, -3.30, 2.05))
-    interior_cam = bpy.context.object
-    interior_cam.name = "CENTS interior checkout and aisle review camera"
-    interior_target = Vector((2.05, -0.10, 1.25))
-    interior_cam.rotation_euler = (interior_target - interior_cam.location).to_track_quat("-Z", "Y").to_euler()
-    interior_cam.data.lens = 27
-    scene.camera = interior_cam
+    bpy.ops.object.camera_add(location=(8.0, -10.0, 8.0))
+    camera = bpy.context.object
+    camera.name = "CENTS merchandising review camera"
+    camera.rotation_euler = (Vector((0.0, 0.0, 1.0)) - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.data.lens = 42
+    scene.camera = camera
     scene.render.filepath = os.path.abspath(options.preview)
-    bpy.ops.render.render(write_still=True)
-
-    # Second view: clean overhead layout review with the roof hidden.
-    bpy.ops.object.camera_add(location=(0.0, 0.0, 15.5))
-    plan_cam = bpy.context.object
-    plan_cam.name = "CENTS overhead layout review camera"
-    plan_cam.rotation_euler = (Vector((0.0, 0.0, 0.0)) - plan_cam.location).to_track_quat("-Z", "Y").to_euler()
-    plan_cam.data.type = "ORTHO"
-    plan_cam.data.ortho_scale = 14.5
-    scene.camera = plan_cam
-    scene.render.filepath = os.path.abspath(options.preview).replace(".png", "-entrance.png")
     bpy.ops.render.render(write_still=True)
 
 
