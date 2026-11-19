@@ -524,7 +524,7 @@ def _deli_tub(origin, angle, scale, art, lid, cup, parts):
     _bevel_box("Deli lid pull tab", (0.024, 0.020, 0.006), (0.055, 0, 0.210), lid, angle, scale, parts, 0.004, product_origin=origin)
 
 
-def build_merchandise(size=256):
+def build_merchandise(size=256, minimal=False):
     metal = _solid("Brushed aluminum and closure metal", (0.48, 0.51, 0.49), 0.27, 0.78)
     dark_metal = _solid("Dark printed metal", (0.075, 0.095, 0.095), 0.32, 0.55)
     plastic = _solid("Molded PET and bottle plastic", (0.18, 0.27, 0.24), 0.24, 0.0)
@@ -546,6 +546,10 @@ def build_merchandise(size=256):
     }
 
     parts = []
+    if minimal:
+        _emit_product(parts, _can, "EMBER COLA CAN", (0.0, 0.0, 0.0), 0.0, 1.0, art["can"], metal, dark_metal)
+        _emit_product(parts, _deli_tub, "DELI FRESH PASTA CUP", (0.0, 0.0, 0.0), 0.0, 1.0, art["deli"], deli_lid, deli_cup)
+        return parts, []
     gondolas = (-2.35, 2.35)
     # Product bases sit just above the actual gondola shelf tops (0.4575, 0.9475, 1.4375).
     shelves = (0.462, 0.952, 1.442)
