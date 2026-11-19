@@ -90,7 +90,7 @@ jobs:
             cp build/district01/district01-commercial-building.glb assets/district01-commercial-building.glb
             cp build/district01/cents-material-identity-study.glb assets/cents-material-identity-study.glb
             cp build/district01/retail-store-kit.glb assets/retail-store-kit.glb
-            git add assets/district01-commercial-building.glb assets/cents-material-identity-study.glb assets/retail-store-kit.glb
+            git add assets/district01-commercial-building.glb assets/cents-material-identity-study.glb assets/retail-store-kit.glb assets/merchandise
             if git diff --cached --quiet; then
               echo "Generated assets already match main."
               exit 0
@@ -113,6 +113,6 @@ jobs:
             build/district01/*.glb
             build/district01/retail-store-kit-preview.png
             build/district01/retail-store-kit-preview-entrance.png
-            build/district01/cents-packaging-preview.png
+            build/district01/cents-packaging-preview.png\n            assets/merchandise/manifest.json\n            assets/merchandise/models/*.glb
           if-no-files-found: error
           retention-days: 7
