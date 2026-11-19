@@ -216,11 +216,11 @@ def build(options):
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
-    scene.cycles.samples = 24
+    scene.cycles.samples = 12
     scene.cycles.use_denoising = True
-    scene.render.resolution_x = 1200
-    scene.render.resolution_y = 900
-    scene.render.resolution_percentage = 75
+    scene.render.resolution_x = 1100
+    scene.render.resolution_y = 825
+    scene.render.resolution_percentage = 70
     scene.render.image_settings.file_format = "PNG"
     scene.view_settings.view_transform = "Standard"
     scene.view_settings.look = "Medium High Contrast"
@@ -231,16 +231,10 @@ def build(options):
     world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.22, 0.26, 0.27, 1)
     world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.75
     target = Vector((0, 0, 1.2))
-    bpy.ops.object.camera_add(location=(11.5, -14.5, 11.0))
-    cam = bpy.context.object
-    cam.name = "CENTS redesigned store review camera"
-    cam.rotation_euler = (target - cam.location).to_track_quat("-Z", "Y").to_euler()
-    cam.data.lens = 42
-    scene.camera = cam
     for name, loc, energy, radius in (
-        ("Store key", (0, -8, 12), 2600, 8),
-        ("Store fill", (-8, 2, 8), 1800, 7),
-        ("Store rear", (5, 7, 9), 2100, 6),
+        ("Store key", (0, -7, 10), 2600, 8),
+        ("Store fill", (-7, 1, 7), 1800, 7),
+        ("Store rear", (5, 6, 8), 2100, 6),
     ):
         bpy.ops.object.light_add(type="AREA", location=loc)
         light = bpy.context.object
@@ -249,16 +243,31 @@ def build(options):
         light.data.shape = "DISK"
         light.data.size = radius
         light.rotation_euler = (target - light.location).to_track_quat("-Z", "Y").to_euler()
+
+    # Review renders must expose the interior rather than photograph the opaque roof.
+    roof = bpy.data.objects.get("Ceiling")
+    if roof:
+        roof.hide_render = True
+
+    # First view: standing just inside the entrance, looking down the shopping floor.
+    bpy.ops.object.camera_add(location=(0.0, -3.65, 2.05))
+    interior_cam = bpy.context.object
+    interior_cam.name = "CENTS interior aisle review camera"
+    interior_target = Vector((0.0, 2.65, 1.25))
+    interior_cam.rotation_euler = (interior_target - interior_cam.location).to_track_quat("-Z", "Y").to_euler()
+    interior_cam.data.lens = 30
+    scene.camera = interior_cam
     scene.render.filepath = os.path.abspath(options.preview)
     bpy.ops.render.render(write_still=True)
-    # Second angle checks the actual customer entrance and checkout sightline.
-    bpy.ops.object.camera_add(location=(0.0, -13.5, 3.2))
-    entrance_cam = bpy.context.object
-    entrance_cam.name = "CENTS customer entrance review camera"
-    entrance_target = Vector((0.0, -0.2, 1.45))
-    entrance_cam.rotation_euler = (entrance_target - entrance_cam.location).to_track_quat("-Z", "Y").to_euler()
-    entrance_cam.data.lens = 42
-    scene.camera = entrance_cam
+
+    # Second view: clean overhead layout review with the roof hidden.
+    bpy.ops.object.camera_add(location=(0.0, 0.0, 15.5))
+    plan_cam = bpy.context.object
+    plan_cam.name = "CENTS overhead layout review camera"
+    plan_cam.rotation_euler = (Vector((0.0, 0.0, 0.0)) - plan_cam.location).to_track_quat("-Z", "Y").to_euler()
+    plan_cam.data.type = "ORTHO"
+    plan_cam.data.ortho_scale = 14.5
+    scene.camera = plan_cam
     scene.render.filepath = os.path.abspath(options.preview).replace(".png", "-entrance.png")
     bpy.ops.render.render(write_still=True)
 
