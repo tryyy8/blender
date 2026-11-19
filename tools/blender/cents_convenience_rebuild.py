@@ -149,16 +149,10 @@ def build(options):
             add("Recessed ceiling light diffuser", (x, y, 4.065), (1.62, 0.42, 0.018), glow, 0.02)
 
     # Keep only the two established custom products. The scanned-brand catalogue is not used.
-    product_objects, chilled = build_merchandise(size)
-    keep = []
-    for obj in product_objects:
-        if "EMBER COLA CAN" in obj.name or "DELI FRESH PASTA CUP" in obj.name:
-            keep.append(obj)
-        elif obj and obj.name in bpy.data.objects:
-            bpy.data.objects.remove(obj, do_unlink=True)
-    for obj in chilled:
-        if obj and obj.name in bpy.data.objects and obj not in keep:
-            bpy.data.objects.remove(obj, do_unlink=True)
+    product_objects, chilled = build_merchandise(size, minimal=True)
+    keep = list(product_objects)
+    if len(keep) != 2:
+        raise RuntimeError("Minimal merchandise mode must produce exactly Ember Cola and Deli Fresh Pasta Salad")
 
     # Import CC0 stocked steel gondola modules; their grocery stock is unbranded.
     shelf_path = os.path.join(options.fixtures_dir, "grocery-shelf-run.glb")
@@ -183,10 +177,8 @@ def build(options):
 
     # Retained products sit as distinct, real objects at the deli end of the counter.
     # Their original meshes and materials remain untouched.
-    for i, obj in enumerate(keep):
-        obj.location.x = 3.20 + (i % 2) * 0.30
-        obj.location.y = -1.65 + (i // 2) * 0.25
-        obj.location.z += 0.04
+    keep[0].location = (3.15, -1.35, 1.22)
+    keep[1].location = (3.48, -1.35, 1.22)
 
     # Checkout queue stanchions and impulse display define customer flow without blocking aisles.
     for x in (2.55, 3.35):
