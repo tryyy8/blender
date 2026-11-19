@@ -66,11 +66,9 @@ jobs:
           set -euxo pipefail
           mkdir -p build/district01
           blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/district01/pipeline-smoke-test.glb
-          blender --background --python tools/blender/district01_commercial_building.py -- --output build/district01/district01-commercial-building.glb
           blender --background --python tools/blender/cents_material_identity_study.py -- --output build/district01/cents-material-identity-study.glb --size 384
           blender --background --python tools/blender/cents_packaging_preview.py -- --output build/district01/cents-packaging-preview.png
           test -s build/district01/pipeline-smoke-test.glb
-          test -s build/district01/district01-commercial-building.glb
           test -s build/district01/cents-material-identity-study.glb
           test -s build/district01/cents-packaging-preview.png
           ls -lh build/district01/*.glb
@@ -83,9 +81,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             mkdir -p assets
-            cp build/district01/district01-commercial-building.glb assets/district01-commercial-building.glb
             cp build/district01/cents-material-identity-study.glb assets/cents-material-identity-study.glb
-            git add assets/district01-commercial-building.glb assets/cents-material-identity-study.glb
+            git add assets/cents-material-identity-study.glb
             if git diff --cached --quiet; then
               echo "Generated assets already match main."
               exit 0
@@ -103,7 +100,7 @@ jobs:
       - name: Upload generated models
         uses: actions/upload-artifact@v4
         with:
-          name: cents-blender-environment-studies
+          name: cents-blender-material-and-pipeline-studies
           path: |
             build/district01/*.glb
             build/district01/cents-packaging-preview.png
