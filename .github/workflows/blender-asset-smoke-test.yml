@@ -69,8 +69,11 @@ jobs:
             https://tevy.dev/models/grocery-shelf-run/v2/lod0.glb \
             -o build/retail-fixtures/grocery-shelf-run.glb
           curl --fail --location --retry 4 --retry-all-errors \
-            https://tevy.dev/models/checkout-counter/v2/lod0.glb \
-            -o build/retail-fixtures/checkout-counter.glb
+            https://www.innerscene.com/api/library/double-glass-door-beverage-cooler-d8290fa0/download \
+            -o build/retail-fixtures/double-glass-door-beverage-cooler.glb
+          curl --fail --location --retry 4 --retry-all-errors \
+            https://www.innerscene.com/api/library/checkout-counter-with-pos-original-retail-fixture-3fcfb566/download \
+            -o build/retail-fixtures/checkout-counter-with-pos.glb
           curl --fail --location --retry 4 --retry-all-errors \
             https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-x86_64.deb \
             -o /tmp/ktx-software.deb
@@ -84,7 +87,8 @@ jobs:
             mv "$decoded" "$model"
           done
           test -s build/retail-fixtures/grocery-shelf-run.glb
-          test -s build/retail-fixtures/checkout-counter.glb
+          test -s build/retail-fixtures/double-glass-door-beverage-cooler.glb
+          test -s build/retail-fixtures/checkout-counter-with-pos.glb
 
       - name: Generate Blender assets
         timeout-minutes: 18
