@@ -60,25 +60,25 @@ jobs:
           echo "$BLENDER_DIR" >> "$GITHUB_PATH"
           "$BLENDER_DIR/blender" --background --factory-startup --python-expr "import bpy; assert bpy.app.version_string.startswith('$BLENDER_VERSION'), bpy.app.version_string; print('BLENDER_VERSION=' + bpy.app.version_string)"
 
-      - name: Download and stage curated scanned merchandise
-        timeout-minutes: 8
-        run: |
-          set -euxo pipefail
-          python3 tools/blender/fetch_cents_merchandise.py build/merchandise
-          mkdir -p assets/merchandise/models
-          cp build/merchandise/manifest.json assets/merchandise/manifest.json
-          cp build/merchandise/models/*.glb assets/merchandise/models/
-
-      - name: Decompress Meshopt merchandise for Blender 4.5
+      - name: Download CC0 retail fixtures
         timeout-minutes: 5
         run: |
           set -euxo pipefail
+          mkdir -p build/retail-fixtures
+          curl --fail --location --retry 4 --retry-all-errors \
+            https://tevy.dev/models/grocery-shelf-run/v2/lod0.glb \
+            -o build/retail-fixtures/grocery-shelf-run.glb
+          curl --fail --location --retry 4 --retry-all-errors \
+            https://tevy.dev/models/checkout-counter/v2/lod0.glb \
+            -o build/retail-fixtures/checkout-counter.glb
           npm install --global @gltf-transform/cli
-          for model in assets/merchandise/models/*.glb; do
+          for model in build/retail-fixtures/*.glb; do
             decoded="${model%.glb}.decoded.glb"
             gltf-transform copy "$model" "$decoded"
             mv "$decoded" "$model"
           done
+          test -s build/retail-fixtures/grocery-shelf-run.glb
+          test -s build/retail-fixtures/checkout-counter.glb
 
       - name: Generate Blender assets
         timeout-minutes: 18
@@ -88,7 +88,7 @@ jobs:
           blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/district01/pipeline-smoke-test.glb
           blender --background --python tools/blender/district01_commercial_building.py -- --output build/district01/district01-commercial-building.glb
           blender --background --python tools/blender/cents_material_identity_study.py -- --output build/district01/cents-material-identity-study.glb --size 384
-          blender --background --python tools/blender/retail_store_kit.py -- --output build/district01/retail-store-kit.glb --texture-size 256 --preview build/district01/retail-store-kit-preview.png
+          blender --background --python tools/blender/cents_convenience_rebuild.py -- --output build/district01/retail-store-kit.glb --fixtures-dir build/retail-fixtures --texture-size 256 --preview build/district01/retail-store-kit-preview.png
           blender --background --python tools/blender/cents_packaging_preview.py -- --output build/district01/cents-packaging-preview.png
           test -s build/district01/pipeline-smoke-test.glb
           test -s build/district01/district01-commercial-building.glb
@@ -103,16 +103,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp -a assets/merchandise "$RUNNER_TEMP/cents-merchandise"
-          for attempt in 1 2 3 4 5; do
+                    for attempt in 1 2 3 4 5; do
             git fetch origin main
             git reset --hard origin/main
             mkdir -p assets
-            cp -a "$RUNNER_TEMP/cents-merchandise" assets/merchandise
             cp build/district01/district01-commercial-building.glb assets/district01-commercial-building.glb
             cp build/district01/cents-material-identity-study.glb assets/cents-material-identity-study.glb
             cp build/district01/retail-store-kit.glb assets/retail-store-kit.glb
-            git add assets/district01-commercial-building.glb assets/cents-material-identity-study.glb assets/retail-store-kit.glb assets/merchandise
+            git add assets/district01-commercial-building.glb assets/cents-material-identity-study.glb assets/retail-store-kit.glb 
             if git diff --cached --quiet; then
               echo "Generated assets already match main."
               exit 0
