@@ -49,23 +49,23 @@ def _label_material(name, primary, accent):
     return material
 
 
-def _add_fictional_label(name, display_name, center, width, height, material, accent_material):
+def _add_fictional_label(name, display_name, center, width, height, material, accent_material, yaw=0.0):
     # A small front-facing label replaces the original scanned brand panel.
     bpy.ops.mesh.primitive_plane_add(size=1.0, location=center)
     label = bpy.context.object
     label.name = "CENTS fictional label - " + name
-    label.rotation_euler[0] = 1.57079632679  # faces the aisle (-Y)
+    label.rotation_euler = (1.57079632679, 0.0, yaw)  # faces the correct aisle
     label.dimensions = (width, height, 0.002)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     label.data.materials.append(material)
     # A narrow top stripe and raised fictional SKU name replace the source logo.
-    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(center[0], center[1] - 0.002, center[2] + height * 0.36))
+    front_sign = 1.0 if abs(yaw) > 1.5707963 else -1.0\n    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(center[0], center[1] + front_sign * 0.002, center[2] + height * 0.36))
     stripe = bpy.context.object
     stripe.name = "CENTS label accent stripe - " + name
     stripe.dimensions = (width * 0.92, 0.008, max(0.004, height * 0.07))
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     stripe.data.materials.append(accent_material)
-    bpy.ops.object.text_add(location=(center[0], center[1] - 0.006, center[2]), rotation=(1.57079632679, 0.0, 0.0))
+    bpy.ops.object.text_add(location=(center[0], center[1] + front_sign * 0.006, center[2]), rotation=(1.57079632679, 0.0, yaw))
     lettering = bpy.context.object
     lettering.name = "CENTS fictional product name - " + name
     lettering.data.body = display_name.upper()
@@ -135,10 +135,10 @@ def import_prebuilt_merchandise(manifest_path=DEFAULT_MANIFEST):
         low, high = _bounds(meshes)
         label_width = min((high.x - low.x) * 0.76, float(entry.get("label_width", 0.18)))
         label_height = min((high.z - low.z) * 0.34, float(entry.get("label_height", 0.075)))
-        label_center = ((low.x + high.x) * 0.5, low.y - 0.004, low.z + (high.z - low.z) * 0.55)
+        yaw = float(entry.get("yaw", 0.0))\n        front_y = high.y + 0.004 if abs(yaw) > 1.5707963 else low.y - 0.004\n        label_center = ((low.x + high.x) * 0.5, front_y, low.z + (high.z - low.z) * 0.55)
         label_mat = _label_material(entry["sku"], primary, accent)
         accent_mat = _fictional_material(entry["sku"] + " accent", accent)
-        labels = _add_fictional_label(entry["sku"], entry.get("label", entry["sku"]), label_center, label_width, label_height, label_mat, accent_mat)
+        labels = _add_fictional_label(entry["sku"], entry.get("label", entry["sku"]), label_center, label_width, label_height, label_mat, accent_mat, yaw)
         imported_objects.extend(created + labels)
         if entry.get("department") == "cold-drinks":
             chilled_objects.extend(created + labels)
