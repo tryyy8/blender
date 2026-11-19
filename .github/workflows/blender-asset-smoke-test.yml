@@ -72,13 +72,13 @@ jobs:
             https://www.innerscene.com/api/library/double-glass-door-beverage-cooler-d8290fa0/download \
             -o build/retail-fixtures/double-glass-door-beverage-cooler.glb
           curl --fail --location --retry 4 --retry-all-errors \
-            https://www.innerscene.com/api/library/checkout-counter-with-pos-original-retail-fixture-3fcfb566/download \
-            -o build/retail-fixtures/checkout-counter-with-pos.glb
+            https://www.innerscene.com/api/library/shop-service-counter-with-till-2600-mm-18482f61/download \
+            -o build/retail-fixtures/shop-service-counter-with-till.glb
           curl --fail --location --retry 4 --retry-all-errors \
             https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-x86_64.deb \
             -o /tmp/ktx-software.deb
           sudo apt-get update
-          sudo apt-get install -y /tmp/ktx-software.deb
+          sudo apt-get install -y /tmp/ktx-software.deb libegl1 libgl1
           command -v ktx
           npm install --global @gltf-transform/cli
           for model in build/retail-fixtures/*.glb; do
@@ -88,7 +88,7 @@ jobs:
           done
           test -s build/retail-fixtures/grocery-shelf-run.glb
           test -s build/retail-fixtures/double-glass-door-beverage-cooler.glb
-          test -s build/retail-fixtures/checkout-counter-with-pos.glb
+          test -s build/retail-fixtures/shop-service-counter-with-till.glb
 
       - name: Generate Blender assets
         timeout-minutes: 18
