@@ -251,6 +251,16 @@ def build(options):
         light.rotation_euler = (target - light.location).to_track_quat("-Z", "Y").to_euler()
     scene.render.filepath = os.path.abspath(options.preview)
     bpy.ops.render.render(write_still=True)
+    # Second angle checks the actual customer entrance and checkout sightline.
+    bpy.ops.object.camera_add(location=(0.0, -13.5, 3.2))
+    entrance_cam = bpy.context.object
+    entrance_cam.name = "CENTS customer entrance review camera"
+    entrance_target = Vector((0.0, -0.2, 1.45))
+    entrance_cam.rotation_euler = (entrance_target - entrance_cam.location).to_track_quat("-Z", "Y").to_euler()
+    entrance_cam.data.lens = 42
+    scene.camera = entrance_cam
+    scene.render.filepath = os.path.abspath(options.preview).replace(".png", "-entrance.png")
+    bpy.ops.render.render(write_still=True)
 
 
 if __name__ == "__main__":
