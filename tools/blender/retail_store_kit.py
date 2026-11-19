@@ -201,7 +201,7 @@ def build_store_kit(size, output, preview):
     add("Front right pier", (6.5, -5.88, 2.1), (2.75, 0.24, 4.2), mats["plaster"], 0.045)
     add("Front fascia", (0, -5.88, 3.82), (10.25, 0.24, 0.76), mats["paint"], 0.035)
     # A real ceiling closes the room and makes the interior read as a store, not a cutaway.
-    add("Interior ceiling roof", (0, 0, 4.16), (16, 12, 0.22), mats["light"], 0.035)
+    ceiling_roof = cube("Interior ceiling roof", (0, 0, 4.16), (16, 12, 0.22), mats["light"], 0.035)
     # Familiar convenience-store wall treatment: dark base trim and a continuous
     # evergreen accent band, with light neutral plaster above and below.
     wall_trim = make_material("Store deep green wall trim", "painted", (0.12, 0.25, 0.22), 0.60, size=size)
@@ -445,12 +445,12 @@ def build_store_kit(size, output, preview):
         ceiling = bpy.data.objects.get("Interior ceiling roof")
         if ceiling:
             ceiling.hide_render = True
-        target = Vector((0.0, 0.0, 1.55))
-        bpy.ops.object.camera_add(location=(19.5, -23.0, 18.0))
+        target = Vector((0.0, 0.0, 1.20))
+        bpy.ops.object.camera_add(location=(0.0, -0.01, 27.0))
         camera = bpy.context.object
         camera.name = "Production store wide review camera"
         camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
-        camera.data.lens = 42
+        camera.data.lens = 36
         scene.camera = camera
         scene.view_settings.look = "Medium High Contrast"
         scene.view_settings.exposure = 0.35
