@@ -27,7 +27,7 @@ TARGETS = [
     ("tea|juice|drink", "Daybreak Iced Tea", "cold-drinks", 2),
     ("soup", "Pantry Tomato Soup", "pantry", 3),
     ("bean", "Pantry Baked Beans", "pantry", 4),
-    ("milk", "Homestead Milk", "cold-drinks", 0),
+    ("milk(?! chocolate)", "Homestead Milk", "cold-drinks", 0),
 ]
 EXCLUDE = re.compile(r"beer|wine|whisky|whiskey|vodka|gin|rum|tequila|champagne|alcohol|supplement|vitamin|protein|medicine|drug|cleaner|detergent|shampoo|soap", re.I)
 FOOD_CATEGORIES = {"food and drink", "food", "bottles and cups", "bottles and cans and cups"}
