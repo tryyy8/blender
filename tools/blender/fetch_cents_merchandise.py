@@ -119,6 +119,27 @@ def main():
                         "license": product["license"],
                     })
 
+    # Stock the rear double-door coolers with scanned bottled/canned drinks too.
+    cold_pool = [p for p in selected if p["department"] == "cold-drinks"] or selected
+    cabinet_centers = (-5.20, -3.32)
+    cooler_shelves = (0.475, 0.875, 1.275, 1.655)
+    for cabinet_x in cabinet_centers:
+        for door_offset in (-0.435, 0.435):
+            bay_center = cabinet_x + door_offset
+            for shelf_index, shelf_z in enumerate(cooler_shelves):
+                for item in range(4):
+                    product = cold_pool[(shelf_index + item) % len(cold_pool)]
+                    x = bay_center - 0.27 + item * 0.18
+                    manifest_products.append({
+                        "file": product["id"] + ".glb",
+                        "sku": product["label"].upper().replace(" ", "-"),
+                        "label": product["label"], "position": [x, 4.42, shelf_z],
+                        "height": 0.23, "yaw": 0.0, "palette": product["palette"],
+                        "department": "cold-drinks", "source_name": product["source_name"],
+                        "source_url": "https://huggingface.co/datasets/codepawl/scanned-objects-glb",
+                        "license": product["license"],
+                    })
+
     for product in selected:
         target = os.path.join(models_dir, product["id"] + ".glb")
         if not os.path.isfile(target):
