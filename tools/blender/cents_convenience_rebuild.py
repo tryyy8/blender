@@ -170,71 +170,127 @@ def build_detailed_cooler_bank(size):
         print("COOLER", index, "hinged door mesh", len(door.data.polygons))
 
 
-def build(options):
-    """Assemble the CENTS sales floor from retained premade merchandising only.
+def build_new_store_shell(size):
+    """Create a fresh compact neighborhood-store shell; none of the rejected room survives."""
+    floor = make_material("CENTS new store warm terrazzo floor", "concrete", (0.56, 0.55, 0.49), 0.78, size=size)
+    wall = make_material("CENTS new store warm ivory plaster", "plaster", (0.79, 0.75, 0.66), 0.88, size=size)
+    accent = make_material("CENTS new store deep evergreen trim", "painted", (0.10, 0.24, 0.21), 0.55, size=size)
+    dark = make_material("CENTS new store charcoal metal", "metal", (0.075, 0.095, 0.09), 0.34, 0.55, size)
+    wood = make_material("CENTS new store warm oak trim", "wood", (0.38, 0.24, 0.14), 0.56, size=size)
+    glass = make_glass("CENTS new storefront clear glass", (0.40, 0.58, 0.61), 0.12, 0.04, 0.24)
+    light = make_emissive("CENTS new ceiling diffuser", (0.92, 0.86, 0.70))
 
-    The former generated room shell, ceiling, architectural lighting, queue rails,
-    coffee station, signage and supermarket-style checkout are deliberately not
-    emitted. They were the rejected previous store, not reusable store assets.
-    """
+    # Fresh 10 m x 9 m interior. This is new architecture, not reused old-store geometry.
+    cube("CENTS NEW STORE floor slab", (0, 0, -0.13), (10.0, 9.0, 0.26), floor, 0.025)
+    cube("CENTS NEW STORE rear wall", (0, 4.42, 1.82), (10.0, 0.22, 3.64), wall, 0.025)
+    cube("CENTS NEW STORE left wall", (-4.90, 0, 1.82), (0.20, 8.65, 3.64), wall, 0.025)
+    cube("CENTS NEW STORE right wall", (4.90, 0, 1.82), (0.20, 8.65, 3.64), wall, 0.025)
+    cube("CENTS NEW STORE ceiling", (0, 0, 3.68), (10.0, 9.0, 0.20), wall, 0.02)
+
+    # Front shopfront: two glazed display windows and a central double-width entry.
+    for x in (-3.55, 3.55):
+        cube("CENTS NEW STORE front pier", (x, -4.42, 1.82), (2.90, 0.22, 3.64), wall, 0.02)
+    cube("CENTS NEW STORE front header", (0, -4.42, 3.34), (4.25, 0.22, 0.60), accent, 0.025)
+    for x in (-2.35, 2.35):
+        cube("CENTS NEW STORE storefront glazing", (x, -4.30, 1.82), (2.10, 0.055, 2.72), glass, 0.008)
+        for edge in (-1, 1):
+            cube("CENTS NEW STORE storefront mullion", (x + edge * 1.05, -4.36, 1.82), (0.055, 0.10, 2.82), dark, 0.008)
+        cube("CENTS NEW STORE window sill", (x, -4.39, 0.43), (2.18, 0.16, 0.09), wood, 0.012)
+        cube("CENTS NEW STORE window head", (x, -4.39, 3.21), (2.18, 0.16, 0.09), dark, 0.012)
+    cube("CENTS NEW STORE entry glass", (0, -4.30, 1.48), (1.46, 0.055, 2.90), glass, 0.008)
+    for x in (-0.76, 0.76):
+        cube("CENTS NEW STORE entry jamb", (x, -4.38, 1.50), (0.075, 0.13, 3.02), dark, 0.012)
+    cube("CENTS NEW STORE entry transom", (0, -4.38, 3.02), (1.56, 0.13, 0.07), dark, 0.010)
+    for x in (-0.54, 0.54):
+        cube("CENTS NEW STORE door pull", (x, -4.42, 1.48), (0.035, 0.07, 0.62), wood, 0.012)
+
+    # A restrained continuous wall band and timber kick plate make the new room feel finished.
+    cube("CENTS NEW STORE rear green wall band", (0, 4.29, 3.12), (9.72, 0.035, 0.22), accent, 0.008)
+    cube("CENTS NEW STORE left timber kick", (-4.78, 0, 0.18), (0.035, 8.55, 0.22), wood, 0.008)
+    cube("CENTS NEW STORE right timber kick", (4.78, 0, 0.18), (0.035, 8.55, 0.22), wood, 0.008)
+    for x in (-2.6, 0.0, 2.6):
+        cube("CENTS NEW STORE ceiling light housing", (x, 0.15, 3.53), (1.35, 0.34, 0.07), dark, 0.025)
+        cube("CENTS NEW STORE ceiling light diffuser", (x, 0.15, 3.485), (1.20, 0.25, 0.025), light, 0.012)
+
+    sign = make_material("CENTS new store sign lettering", "painted", (0.96, 0.87, 0.66), 0.42, size=size)
+    add_word("CENTS", (0, -4.545, 3.34), 0.34, sign)
+    return {"floor": floor, "wall": wall, "accent": accent, "dark": dark, "wood": wood, "glass": glass}
+
+
+def build(options):
+    """Build a compact convenience store from fresh architecture and premade fixtures."""
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     size = options.texture_size
+    os.makedirs(os.path.dirname(os.path.abspath(options.output)), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(options.preview)), exist_ok=True)
 
-    # Only the two approved authored SKUs survive the rebuild.
-    product_objects, chilled = build_merchandise(size, minimal=True)
-    keep = list(product_objects)
-    if len(keep) != 2:
-        raise RuntimeError("Minimal merchandise mode must produce exactly Ember Cola and Deli Fresh Pasta Salad")
+    build_new_store_shell(size)
 
-    # Preserve the premade grocery shelving the user approved. No new shelf
-    # geometry or invented shelf stock is generated here.
+    # Keep only the two approved authored products, as independent game objects.
+    products, chilled = build_merchandise(size, minimal=True)
+    if len(products) != 2 or chilled:
+        raise RuntimeError("Minimal merchandise mode must produce only Ember Cola and Deli Fresh Pasta Salad")
+
+    # Reuse the premade shelf model the user approved. Do not generate replacement shelving.
     shelf_path = os.path.join(options.fixtures_dir, "grocery-shelf-run.glb")
     shelf_positions = [
-        (-1.55, -1.05, math.pi / 2),
-        (-1.55, 1.05, math.pi / 2),
-        (1.55, -1.05, math.pi / 2),
-        (1.55, 1.05, math.pi / 2),
+        (-1.48, -0.95, math.pi / 2),
+        (-1.48, 1.18, math.pi / 2),
+        (1.38, -0.95, math.pi / 2),
+        (1.38, 1.18, math.pi / 2),
     ]
-    for i, (x, y, yaw) in enumerate(shelf_positions, 1):
-        place_fixture(shelf_path, "Approved premade grocery shelving " + str(i), (x, y, 0), yaw, target_height=1.82)
-    place_fixture(shelf_path, "Approved premade perimeter shelving", (4.65, 0.85, 0), 0.0, target_height=1.82)
+    for index, (x, y, yaw) in enumerate(shelf_positions, 1):
+        place_fixture(shelf_path, "Premade approved grocery shelf run " + str(index), (x, y, 0), yaw, target_height=1.82)
+    place_fixture(shelf_path, "Premade approved perimeter grocery shelving", (4.20, 1.05, 0), 0.0, target_height=1.82)
 
-    # Keep the approved products as separate objects for their existing game
-    # interactions; do not add the rejected generic catalogue.
-    keep[0].location = (3.15, -1.35, 1.22)
-    keep[1].location = (3.48, -1.35, 1.22)
+    # Commercial CC0 two-door beverage coolers, imported intact rather than rebuilt from primitives.
+    cooler_path = os.path.join(options.fixtures_dir, "double-glass-door-beverage-cooler.glb")
+    for index, x in enumerate((-2.75, -1.40, -0.05), 1):
+        place_fixture(cooler_path, "Premade CC0 beverage cooler " + str(index), (x, 3.48, 0), 0.0, target_height=2.0)
 
-    # Retain the existing cooler interaction assemblies, but do not recreate
-    # the previous room, floor, ceiling, lights, wall treatment or checkout.
-    build_detailed_cooler_bank(size)
+    # Compact CC0 checkout fixture with integrated POS; no belt or supermarket bagging lane.
+    checkout_path = os.path.join(options.fixtures_dir, "checkout-counter-with-pos.glb")
+    place_fixture(checkout_path, "Premade compact cash-wrap checkout with POS", (3.15, -2.70, 0), math.pi / 2, target_height=1.22)
 
+    # Place the two retained authored products on the transaction surface as the store's initial stock.
+    products[0].location = (3.02, -2.78, 1.22)
+    products[1].location = (3.30, -2.78, 1.22)
+
+    # Export the production scene without cameras/lights or any rejected old-store objects.
     bpy.ops.object.select_all(action="SELECT")
-    selected = bpy.context.selected_objects
-    if selected:
-        bpy.context.view_layer.objects.active = selected[0]
     bpy.ops.export_scene.gltf(
         filepath=os.path.abspath(options.output), export_format="GLB",
         export_apply=True, export_texcoords=True, export_normals=True,
         export_materials="EXPORT", export_image_format="AUTO", export_yup=True
     )
-    print("CENTS stripped-back merchandising scene exported:", os.path.abspath(options.output))
+    print("CENTS NEW CONVENIENCE STORE exported:", os.path.abspath(options.output))
 
-    # Keep the review output useful without reintroducing any room geometry.
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE_NEXT"
-    scene.render.resolution_x = 1100
-    scene.render.resolution_y = 825
-    scene.render.resolution_percentage = 70
+    scene.render.resolution_x = 1280
+    scene.render.resolution_y = 960
+    scene.render.resolution_percentage = 75
     scene.render.image_settings.file_format = "PNG"
     scene.view_settings.view_transform = "Standard"
-    bpy.ops.object.camera_add(location=(8.0, -10.0, 8.0))
+    scene.render.film_transparent = False
+    bpy.ops.object.camera_add(location=(8.6, -11.8, 8.2))
     camera = bpy.context.object
-    camera.name = "CENTS merchandising review camera"
-    camera.rotation_euler = (Vector((0.0, 0.0, 1.0)) - camera.location).to_track_quat("-Z", "Y").to_euler()
-    camera.data.lens = 42
+    camera.name = "CENTS store overview review camera"
+    camera.rotation_euler = (Vector((0.0, 0.0, 1.35)) - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.data.lens = 43
     scene.camera = camera
     scene.render.filepath = os.path.abspath(options.preview)
+    bpy.ops.render.render(write_still=True)
+
+    # Required second handoff: a separate eye-level view of the front entry and checkout.
+    bpy.ops.object.camera_add(location=(0.0, -1.4, 1.72))
+    entrance_camera = bpy.context.object
+    entrance_camera.name = "CENTS store entrance review camera"
+    entrance_camera.rotation_euler = (Vector((0.0, -4.2, 1.72)) - entrance_camera.location).to_track_quat("-Z", "Y").to_euler()
+    entrance_camera.data.lens = 38
+    scene.camera = entrance_camera
+    scene.render.filepath = os.path.abspath(options.preview).replace(".png", "-entrance.png")
     bpy.ops.render.render(write_still=True)
 
 
