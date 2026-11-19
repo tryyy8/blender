@@ -232,9 +232,17 @@ def build(options):
 
     # Import CC0 stocked steel gondola modules; their grocery stock is unbranded.
     shelf_path = os.path.join(options.fixtures_dir, "grocery-shelf-run.glb")
-    shelf_positions = [(-1.55, -0.05, math.pi / 2), (1.55, -0.05, math.pi / 2)]
+    shelf_positions = [
+        (-1.55, -1.05, math.pi / 2),
+        (-1.55, 1.05, math.pi / 2),
+        (1.55, -1.05, math.pi / 2),
+        (1.55, 1.05, math.pi / 2),
+    ]
     for i, (x, y, yaw) in enumerate(shelf_positions, 1):
-        place_fixture(shelf_path, "CC0 grocery gondola " + str(i), (x, y, 0), yaw, target_height=1.82)
+        place_fixture(shelf_path, "CC0 grocery gondola section " + str(i), (x, y, 0), yaw, target_height=1.82)
+    # A matching perimeter wall display gives the store a stocked edge rather than
+    # leaving the right half of the sales floor as empty circulation space.
+    place_fixture(shelf_path, "CC0 right-wall grocery display", (4.65, 0.85, 0), 0.0, target_height=1.82)
 
     # Proper checkout lane is a separate premade CC0 asset, replacing the old block-built desk.
     checkout_path = os.path.join(options.fixtures_dir, "checkout-counter.glb")
@@ -316,12 +324,12 @@ def build(options):
 
     # Review renders must expose the interior rather than photograph the opaque roof.
     # First view: standing just inside the entrance, looking down the shopping floor.
-    bpy.ops.object.camera_add(location=(0.0, -3.65, 2.05))
+    bpy.ops.object.camera_add(location=(-2.55, -3.30, 2.05))
     interior_cam = bpy.context.object
-    interior_cam.name = "CENTS interior aisle review camera"
-    interior_target = Vector((0.0, 2.65, 1.25))
+    interior_cam.name = "CENTS interior checkout and aisle review camera"
+    interior_target = Vector((2.05, -0.10, 1.25))
     interior_cam.rotation_euler = (interior_target - interior_cam.location).to_track_quat("-Z", "Y").to_euler()
-    interior_cam.data.lens = 30
+    interior_cam.data.lens = 27
     scene.camera = interior_cam
     scene.render.filepath = os.path.abspath(options.preview)
     bpy.ops.render.render(write_still=True)
