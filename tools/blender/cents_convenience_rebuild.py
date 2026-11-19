@@ -248,7 +248,7 @@ def build(options):
     cooler_path = os.path.join(options.fixtures_dir, "double-glass-door-beverage-cooler.glb")
     for index, x in enumerate((-2.75, -1.40, -0.05), 1):
         cooler_label = "Premade CC0 beverage cooler " + str(index)
-        _, _, cooler_meshes = place_fixture(cooler_path, cooler_label, (x, 3.48, 0), 0.0, target_height=2.0)
+        _, _, cooler_meshes = place_fixture(cooler_path, cooler_label, (x, 4.00, 0), 0.0, target_height=2.0)
         # The cooler is static scenery; merge same-material parts to reduce mobile draw calls.
         join_by_material(cooler_meshes, cooler_label + " consolidated")
 
