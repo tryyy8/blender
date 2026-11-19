@@ -1,46 +1,22 @@
-# CENTS prebuilt merchandise sourcing
+# CENTS retail asset sourcing
 
-CENTS uses a $0 asset budget. This folder is reserved for selected, downloaded retail-product GLBs; do not commit models until their individual source and licence metadata are recorded.
+CENTS has a $0 asset budget. The old scanned-product collection was removed because its source models contained recognizable third-party brand packaging; assigning fictional display names was not sufficient debranding.
 
-## Approved source pool
+## Current approved fixtures
 
-- Food and drink models: https://2dto3d.app/free-3d-models/food
-- Page 2 (canned goods, milk, yogurt, boxed drinks, generic cans): https://2dto3d.app/free-3d-models/food/2
-- Page 3 (packaged bread, pastries, snack bars): https://2dto3d.app/free-3d-models/food/3
-- Page 4 (cereal, boxed foods, canned foods): https://2dto3d.app/free-3d-models/food/4
-- Original source dataset: https://huggingface.co/datasets/nvidia/simready-assets
+- **Grocery Shelf Run** — Tevy, CC0 1.0. Premade double-sided steel gondola with unbranded grocery stock and separable stock node. Pinned source: https://tevy.dev/models/grocery-shelf-run/v2/lod0.glb
+- **Checkout Counter** — Tevy, CC0 1.0. Premade staffed checkout with conveyor, scanner, till, card terminal and bagging shelf. Pinned source: https://tevy.dev/models/checkout-counter/v2/lod0.glb
+- **Food Kit** — Kenney, CC0 1.0. 200 food models for future individual shelf stocking. Official source: https://kenney.nl/assets/food-kit
 
-The catalogue identifies food models as NVIDIA SimReady assets under CC BY 4.0. Attribution required: NVIDIA, from NVIDIA SimReady, CC BY 4.0. Include the licence link and disclose modifications.
+CC0 permits commercial use and modification. Attribution is not required, though credit is appreciated. Preserve source URLs and license notes with the asset pipeline.
 
-## First-pass convenience-store assortment
+## Retained custom products
 
-| Fictional CENTS SKU | Source model candidate | Shelf department |
-|---|---|---|
-| Ember Cola | Keep existing custom asset | Cold drinks |
-| ClearSpring Water | Bottled water (generic) | Cold drinks |
-| Northline Citrus Fizz | Bottled drink / generic can | Cold drinks |
-| Daybreak Iced Tea | Generic bottled drink | Cold drinks |
-| QuickBite Cheese Crackers | Box cracker | Snacks |
-| Saltline Potato Crisps | Generic packaged snack / bar form factor | Snacks |
-| Pocket Treat Chocolate | Generic bar | Checkout impulse |
-| Morning Loop Cereal | Boxed cereal | Pantry |
-| Homestead Milk | Milk | Cold drinks |
-| Pantry Tomato Soup | Can tomato soup | Pantry |
-| Pantry Beans | Canned beans | Pantry |
-| Corner Bakery Danish | Packaged bread danish | Grab-and-go |
-| Corner Bakery Loaf | Packaged bread loaf | Pantry |
-| Deli Fresh Pasta Salad | Keep existing custom asset | Grab-and-go |
+- Ember Cola
+- Deli Fresh Pasta Salad
 
-This is a candidate list, not a claim that all files have already been downloaded or approved. Avoid beer/alcohol, supplements, medicines, and irrelevant bulk packs. Prefer generic/unbranded scans. Where a source model visibly carries a third-party mark, remove its texture artwork and apply a fictional CENTS label; do not ship a recognizable logo or claim endorsement.
+The existing empty commercial cooler construction is retained. Its doors remain separate scene objects so runtime interaction can animate them independently.
 
-## Import contract
+## Exclusions
 
-Place selected GLBs in this folder and add one manifest record per asset with:
-- exact source title and source URL
-- source author and licence
-- local filename and SHA-256
-- fictional SKU name and department
-- target display height in metres
-- front-facing axis / orientation verified in Blender
-
-Keep Ember Cola and pasta salad as the two custom exceptions. Do not replace them with scanned substitutes.
+Do not reintroduce scanned products with recognizable logos, brand names, trade dress, or source artwork. Do not treat a new fictional label over a recognizable branded scan as a debranding solution. Only use source assets with clear commercial-use permissions and inspect the actual rendered model before approval.
