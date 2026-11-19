@@ -69,6 +69,17 @@ jobs:
           cp build/merchandise/manifest.json assets/merchandise/manifest.json
           cp build/merchandise/models/*.glb assets/merchandise/models/
 
+      - name: Decompress Meshopt merchandise for Blender 4.5
+        timeout-minutes: 5
+        run: |
+          set -euxo pipefail
+          npm install --global @gltf-transform/cli
+          for model in assets/merchandise/models/*.glb; do
+            decoded="${model%.glb}.decoded.glb"
+            gltf-transform copy "$model" "$decoded"
+            mv "$decoded" "$model"
+          done
+
       - name: Generate Blender assets
         timeout-minutes: 18
         run: |
