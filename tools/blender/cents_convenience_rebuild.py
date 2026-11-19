@@ -102,6 +102,60 @@ def add_word(text, location, size, material, rotation=(math.pi / 2, 0, 0)):
     return bpy.context.object
 
 
+def build_detailed_cooler_bank(size):
+    """Retain the authored four-bay cooler style; each glass door has its own hinge pivot."""
+    interior = make_material("Cooler interior enamel", "painted", (0.30, 0.39, 0.37), 0.48, size=size)
+    stainless = make_material("Cooler brushed stainless trim", "metal", (0.39, 0.44, 0.42), 0.30, 0.68, size)
+    gasket = make_material("Cooler charcoal door gasket", "painted", (0.035, 0.052, 0.050), 0.78, size=size)
+    glass = make_glass("Cooler blue-green insulated door glass", (0.34, 0.49, 0.48), 0.20, 0.04)
+    body = make_material("Cooler graphite enamel", "metal", (0.12, 0.15, 0.15), 0.28, 0.48, size)
+    liner = make_material("Cooler pale interior liner", "painted", (0.30, 0.39, 0.37), 0.48, size=size)
+    led = make_emissive("Cooler cold-white LED", (0.72, 0.88, 1.0))
+
+    def part(name, loc, dims, material, bevel=0.02):
+        return cube(name, loc, dims, material, bevel)
+
+    centers = (-4.30, -3.36, -2.42, -1.48)
+    front_y = 2.78
+    for index, x in enumerate(centers, 1):
+        prefix = "Cooler " + str(index) + " - "
+        part(prefix + "insulated carcass", (x, front_y + 0.63, 1.56), (0.88, 1.26, 3.08), body, 0.075)
+        part(prefix + "toe kick", (x, front_y + 0.07, 0.18), (0.82, 0.16, 0.28), gasket, 0.035)
+        part(prefix + "crown cap", (x, front_y + 0.68, 3.15), (0.91, 1.30, 0.13), stainless, 0.035)
+        part(prefix + "inner liner", (x, front_y + 0.055, 1.68), (0.73, 0.055, 2.54), liner, 0.012)
+        part(prefix + "rear insulation panel", (x, front_y + 1.30, 1.65), (0.76, 0.07, 2.78), interior, 0.018)
+        for shelf_z in (0.66, 1.30, 1.94, 2.58):
+            part(prefix + "interior shelf", (x, front_y + 0.535, shelf_z), (0.69, 0.58, 0.035), stainless, 0.010)
+            part(prefix + "shelf front lip", (x, front_y + 0.24, shelf_z + 0.025), (0.69, 0.035, 0.055), body, 0.012)
+            for support_x in (-0.33, 0.33):
+                part(prefix + "shelf support", (x + support_x, front_y + 0.525, shelf_z - 0.045), (0.025, 0.58, 0.07), stainless, 0.008)
+        for light_x in (-0.335, 0.335):
+            part(prefix + "LED channel", (x + light_x, front_y + 0.09, 1.70), (0.022, 0.035, 2.40), led, 0.010)
+
+        door_parts = []
+        door_parts.append(part(prefix + "magnetic door gasket", (x, front_y - 0.045, 1.66), (0.80, 0.075, 2.76), gasket, 0.045))
+        door_parts.append(part(prefix + "glass door", (x, front_y - 0.097, 1.66), (0.735, 0.035, 2.68), glass, 0.028))
+        for edge_x in (-0.382, 0.382):
+            door_parts.append(part(prefix + "door stile", (x + edge_x, front_y - 0.127, 1.66), (0.045, 0.075, 2.75), stainless, 0.018))
+        for edge_z in (0.285, 3.035):
+            door_parts.append(part(prefix + "door rail", (x, front_y - 0.127, edge_z), (0.78, 0.075, 0.055), stainless, 0.018))
+        door_parts.append(part(prefix + "vertical pull handle", (x + 0.285, front_y - 0.177, 1.72), (0.045, 0.075, 1.62), stainless, 0.020))
+        for hinge_z in (0.52, 1.62, 2.76):
+            part(prefix + "hinge barrel", (x - 0.385, front_y - 0.06, hinge_z), (0.07, 0.10, 0.19), stainless, 0.025)
+        part(prefix + "top identity plaque", (x, front_y - 0.13, 2.94), (0.36, 0.018, 0.10), body, 0.018)
+
+        pivot = bpy.data.objects.new(prefix + "HINGE PIVOT - animate this node", None)
+        bpy.context.scene.collection.objects.link(pivot)
+        pivot.location = (x - 0.40, front_y - 0.097, 1.66)
+        pivot["cents_interaction"] = "cooler_door"
+        pivot["open_angle_degrees"] = 105.0
+        for obj in door_parts:
+            world = obj.matrix_world.copy()
+            obj.parent = pivot
+            obj.matrix_world = world
+        print("COOLER", index, "door_parts", len(door_parts))
+
+
 def build(options):
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
@@ -143,10 +197,15 @@ def build(options):
     # Restrained wall bands and baseboards give the room a finished retail fit-out.
     add("Rear wall baseboard", (0, 4.22, 0.14), (11.7, 0.06, 0.20), dark, 0.01)
     add("Rear wall brand band", (0, 4.22, 2.72), (11.7, 0.06, 0.16), dark, 0.01)
-    for x in (-3.8, 0, 3.8):
-        for y in (-2.1, 1.65):
-            add("Recessed ceiling light housing", (x, y, 4.10), (1.8, 0.58, 0.05), trim, 0.025)
-            add("Recessed ceiling light diffuser", (x, y, 4.065), (1.62, 0.42, 0.018), glow, 0.02)
+    light_trim = make_material("Recessed light satin aluminum", "metal", (0.31, 0.35, 0.33), 0.29, 0.62, size)
+    light_reveal = make_material("Recessed light dark reveal", "painted", (0.045, 0.055, 0.052), 0.68, size=size)
+    for x in (-3.8, 0.0, 3.8):
+        for y in (-2.0, 1.65):
+            add("LED troffer recessed housing", (x, y, 4.035), (2.08, 0.34, 0.085), light_reveal, 0.055)
+            add("LED troffer perimeter bezel", (x, y, 3.984), (1.98, 0.29, 0.035), light_trim, 0.038)
+            add("LED opal diffuser lens", (x, y, 3.960), (1.84, 0.245, 0.018), glow, 0.028)
+            for end_x in (-0.96, 0.96):
+                add("LED troffer end cap", (x + end_x, y, 3.963), (0.035, 0.25, 0.028), light_trim, 0.010)
 
     # Keep only the two established custom products. The scanned-brand catalogue is not used.
     product_objects, chilled = build_merchandise(size, minimal=True)
@@ -164,16 +223,7 @@ def build(options):
     checkout_path = os.path.join(options.fixtures_dir, "checkout-counter.glb")
     place_fixture(checkout_path, "CC0 staffed checkout", (4.15, -2.45, 0), math.pi / 2, target_height=1.72)
 
-    # Preserve the existing commercial empty cooler design, now as one coherent rear-wall run.
-    cooler_mats = {
-        "cooler_shell": trim,
-        "cooler_interior": dark,
-        "metal": brass,
-        "cooler_glass": glass,
-        "cooler_led": glow,
-    }
-    for i, x in enumerate((-4.15, -2.90, -1.65)):
-        build_empty_commercial_cooler(x, 3.30, i, cooler_mats)
+    # The retained four-bay cooler design is kept, with separately animatable glass doors.
 
     # Retained products sit as distinct, real objects at the deli end of the counter.
     # Their original meshes and materials remain untouched.
@@ -204,6 +254,7 @@ def build(options):
 
     # Keep the room modules separate; only the static shell is joined by material.
     join_by_material(parts, "CENTS_RedesignedShell")
+    build_detailed_cooler_bank(size)
     bpy.ops.object.select_all(action="SELECT")
     bpy.context.view_layer.objects.active = bpy.context.selected_objects[0]
     bpy.ops.export_scene.gltf(
