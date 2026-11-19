@@ -1,9 +1,0 @@
-{
-  "format": "cents-merchandise-manifest/1",
-  "source_pool": "NVIDIA SimReady food and drink models via 2dto3D / CodePawl",
-  "license": "CC BY 4.0",
-  "attribution": "NVIDIA, from NVIDIA SimReady, CC BY 4.0",
-  "license_url": "https://creativecommons.org/licenses/by/4.0/",
-  "note": "Stage only reviewed generic or fully debranded models in models/. Keep Ember Cola and pasta salad in the existing custom generator.",
-  "products": []
-}
