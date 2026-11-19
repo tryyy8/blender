@@ -242,7 +242,7 @@ def build(options):
     ]
     for index, (x, y, yaw) in enumerate(shelf_positions, 1):
         place_fixture(shelf_path, "Premade approved grocery shelf run " + str(index), (x, y, 0), yaw, target_height=1.82)
-    place_fixture(shelf_path, "Premade approved perimeter grocery shelving", (4.20, 1.05, 0), 0.0, target_height=1.82)
+    place_fixture(shelf_path, "Premade approved perimeter grocery shelving", (3.80, 1.05, 0), 0.0, target_height=1.82)
 
     # Commercial CC0 two-door beverage coolers, imported intact rather than rebuilt from primitives.
     cooler_path = os.path.join(options.fixtures_dir, "double-glass-door-beverage-cooler.glb")
@@ -274,22 +274,41 @@ def build(options):
     scene.render.image_settings.file_format = "PNG"
     scene.view_settings.view_transform = "Standard"
     scene.render.film_transparent = False
-    bpy.ops.object.camera_add(location=(8.6, -11.8, 8.2))
+    # Preview-only lighting is added after the GLB export; the game renderer owns runtime lighting.
+    scene.world.color = (0.22, 0.22, 0.22)
+    bpy.ops.object.light_add(type="AREA", location=(0.0, 0.0, 3.25))
+    key_light = bpy.context.object
+    key_light.name = "Preview-only overhead store key"
+    key_light.data.energy = 1800
+    key_light.data.shape = "DISK"
+    key_light.data.size = 7.5
+    bpy.ops.object.light_add(type="AREA", location=(0.0, -2.7, 3.0))
+    fill_light = bpy.context.object
+    fill_light.name = "Preview-only entrance fill"
+    fill_light.data.energy = 1100
+    fill_light.data.shape = "DISK"
+    fill_light.data.size = 5.0
+
+    # The primary review camera is at player eye height just inside the entrance,
+    # looking down the aisle toward the coolers and the compact checkout.
+    bpy.ops.object.camera_add(location=(0.0, -3.35, 1.68))
     camera = bpy.context.object
-    camera.name = "CENTS store overview review camera"
-    camera.rotation_euler = (Vector((0.0, 0.0, 1.35)) - camera.location).to_track_quat("-Z", "Y").to_euler()
-    camera.data.lens = 43
+    camera.name = "CENTS first-person store overview review camera"
+    camera.rotation_euler = (Vector((0.0, 3.8, 1.55)) - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.data.lens = 42
+    camera.data.clip_end = 40
     scene.camera = camera
     scene.render.filepath = os.path.abspath(options.preview)
     bpy.ops.render.render(write_still=True)
 
-    # Required second handoff: a separate eye-level view of the front entry and checkout.
-    bpy.ops.object.camera_add(location=(0.0, -1.4, 1.72))
-    entrance_camera = bpy.context.object
-    entrance_camera.name = "CENTS store entrance review camera"
-    entrance_camera.rotation_euler = (Vector((0.0, -4.2, 1.72)) - entrance_camera.location).to_track_quat("-Z", "Y").to_euler()
-    entrance_camera.data.lens = 38
-    scene.camera = entrance_camera
+    # Secondary eye-level view checks the cash-wrap counter, POS and customer side.
+    bpy.ops.object.camera_add(location=(0.0, -2.5, 1.68))
+    checkout_camera = bpy.context.object
+    checkout_camera.name = "CENTS checkout review camera"
+    checkout_camera.rotation_euler = (Vector((3.35, -2.75, 0.95)) - checkout_camera.location).to_track_quat("-Z", "Y").to_euler()
+    checkout_camera.data.lens = 42
+    checkout_camera.data.clip_end = 40
+    scene.camera = checkout_camera
     scene.render.filepath = os.path.abspath(options.preview).replace(".png", "-entrance.png")
     bpy.ops.render.render(write_still=True)
 
