@@ -257,8 +257,8 @@ def build(options):
     place_fixture(checkout_path, "Premade compact cash-wrap counter with integrated till and POS", (3.45, -2.75, 0), 0.0, target_height=1.22)
 
     # Place the two retained authored products on the transaction surface as the store's initial stock.
-    products[0].location = (3.05, -2.75, 0.90)
-    products[1].location = (3.34, -2.75, 0.90)
+    products[0].location = (3.05, -2.75, 0.85)
+    products[1].location = (3.34, -2.75, 0.85)
 
     # Export the production scene without cameras/lights or any rejected old-store objects.
     bpy.ops.object.select_all(action="SELECT")
