@@ -1,6 +1,6 @@
-A small, standalone repository for running headless Blender asset-generation scripts on GitHub Actions.
+A small, standalone repository for running headless Blender validation and approved asset-study scripts on GitHub Actions.
 
-This repository contains generic procedural Blender tooling only. It is intentionally separate from the private CENTS game repository.
+This repository is intentionally separate from the private CENTS game repository. **It does not generate the CENTS production convenience-store building. That environment must be sourced as a complete pre-built model.**
 
 ## Run the smoke test
 
@@ -41,14 +41,6 @@ blender --background --python tools/blender/cents_material_identity_study.py -- 
 
 The exported GLB is self-contained. A successful export validates the map/export path, not final visual approval; the materials still require comparison in the actual PlayCanvas scene under common lighting.
 
-Generate the reusable modular retail-store asset study locally:
-
-```bash
-blender --background --python tools/blender/retail_store_kit.py -- --output /tmp/retail-store-kit.glb --texture-size 256
-```
-
-The kit keeps the shell, perimeter shelving, gondolas, chillers, checkout, stockroom, product displays, and lighting as separate modules, joining geometry by material within each module. It is generic pipeline tooling; game-specific branding and design stay in the private CENTS repository.
-
 ## Local command
 
 ```bash
@@ -57,7 +49,7 @@ blender --background --python tools/blender/pipeline_smoke_test.py -- --output /
 
 ## License and scope
 
-The scripts are generic procedural tooling. Keep game source, private design documents, credentials, and unreleased CENTS content out of this repository.
+The remaining scripts support independent material, merchandise, district-building, and pipeline studies. They must not be repurposed to generate the production convenience-store shell. Keep game source, private design documents, credentials, and unreleased CENTS content out of this repository.
 
 
 ### Assistant-triggered fallback request
