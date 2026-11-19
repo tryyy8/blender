@@ -60,6 +60,15 @@ jobs:
           echo "$BLENDER_DIR" >> "$GITHUB_PATH"
           "$BLENDER_DIR/blender" --background --factory-startup --python-expr "import bpy; assert bpy.app.version_string.startswith('$BLENDER_VERSION'), bpy.app.version_string; print('BLENDER_VERSION=' + bpy.app.version_string)"
 
+      - name: Download and stage curated scanned merchandise
+        timeout-minutes: 8
+        run: |
+          set -euxo pipefail
+          python3 tools/blender/fetch_cents_merchandise.py build/merchandise
+          mkdir -p assets/merchandise/models
+          cp build/merchandise/manifest.json assets/merchandise/manifest.json
+          cp build/merchandise/models/*.glb assets/merchandise/models/
+
       - name: Generate Blender assets
         timeout-minutes: 18
         run: |
@@ -113,6 +122,6 @@ jobs:
             build/district01/*.glb
             build/district01/retail-store-kit-preview.png
             build/district01/retail-store-kit-preview-entrance.png
-            build/district01/cents-packaging-preview.png\n            assets/merchandise/manifest.json\n            assets/merchandise/models/*.glb
+            build/district01/cents-packaging-preview.png\n            assets/merchandise/manifest.json\n            assets/merchandise/models/*.glb\n            assets/merchandise/manifest.json\n            assets/merchandise/models/*.glb
           if-no-files-found: error
           retention-days: 7
