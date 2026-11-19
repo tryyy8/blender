@@ -60,18 +60,6 @@ jobs:
           echo "$BLENDER_DIR" >> "$GITHUB_PATH"
           "$BLENDER_DIR/blender" --background --factory-startup --python-expr "import bpy; assert bpy.app.version_string.startswith('$BLENDER_VERSION'), bpy.app.version_string; print('BLENDER_VERSION=' + bpy.app.version_string)"
 
-      - name: Download CC0 commercial beverage cooler
-        timeout-minutes: 3
-        run: |
-          set -euxo pipefail
-          cooler="$RUNNER_TEMP/cents-double-glass-door-beverage-cooler.glb"
-          curl --fail --location --retry 4 --retry-all-errors --connect-timeout 20 --max-time 180 \
-            "https://www.innerscene.com/api/library/double-glass-door-beverage-cooler-d8290fa0/download" \
-            -o "$cooler"
-          test -s "$cooler"
-          echo "COOLER_ASSET=$cooler" >> "$GITHUB_ENV"
-          ls -lh "$cooler"
-
       - name: Generate Blender assets
         timeout-minutes: 18
         run: |
@@ -80,7 +68,7 @@ jobs:
           blender --background --python tools/blender/pipeline_smoke_test.py -- --output build/district01/pipeline-smoke-test.glb
           blender --background --python tools/blender/district01_commercial_building.py -- --output build/district01/district01-commercial-building.glb
           blender --background --python tools/blender/cents_material_identity_study.py -- --output build/district01/cents-material-identity-study.glb --size 384
-          blender --background --python tools/blender/retail_store_kit.py -- --output build/district01/retail-store-kit.glb --texture-size 256 --cooler-asset "$COOLER_ASSET" --preview build/district01/retail-store-kit-preview.png
+          blender --background --python tools/blender/retail_store_kit.py -- --output build/district01/retail-store-kit.glb --texture-size 256 --preview build/district01/retail-store-kit-preview.png
           blender --background --python tools/blender/cents_packaging_preview.py -- --output build/district01/cents-packaging-preview.png
           test -s build/district01/pipeline-smoke-test.glb
           test -s build/district01/district01-commercial-building.glb
