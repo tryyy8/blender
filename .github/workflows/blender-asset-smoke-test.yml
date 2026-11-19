@@ -1,4 +1,4 @@
-name: Blender Asset Pipeline Smoke Test
+name: Blender Pipeline and Asset Studies
 # Blender LTS is pinned and restored from Actions cache before generation.
 
 on:
@@ -103,7 +103,7 @@ jobs:
       - name: Upload generated models
         uses: actions/upload-artifact@v4
         with:
-          name: cents-retail-store-asset-kit
+          name: cents-blender-environment-studies
           path: |
             build/district01/*.glb
             build/district01/cents-packaging-preview.png
