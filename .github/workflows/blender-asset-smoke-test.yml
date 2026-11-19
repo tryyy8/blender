@@ -100,8 +100,9 @@ jobs:
           blender --background --python tools/blender/cents_material_identity_study.py -- --output build/district01/cents-material-identity-study.glb --size 384
           blender --background --python tools/blender/cents_convenience_rebuild.py -- --output build/district01/retail-store-kit.glb --fixtures-dir build/retail-fixtures --texture-size 256 --preview build/district01/retail-store-kit-preview.png
           blender --background --python tools/blender/cents_packaging_preview.py -- --output build/district01/cents-packaging-preview.png
-          # Browser-native WebP textures substantially reduce the mobile store download.
-          gltf-transform webp build/district01/retail-store-kit.glb build/district01/retail-store-kit-webp.glb --quality 86
+          # Deduplicate repeated imported fixture geometry/materials, then use browser-native WebP textures.
+          gltf-transform dedup build/district01/retail-store-kit.glb build/district01/retail-store-kit-dedup.glb
+          gltf-transform webp build/district01/retail-store-kit-dedup.glb build/district01/retail-store-kit-webp.glb --quality 86
           mv build/district01/retail-store-kit-webp.glb build/district01/retail-store-kit.glb
           test -s build/district01/pipeline-smoke-test.glb
           test -s build/district01/district01-commercial-building.glb
