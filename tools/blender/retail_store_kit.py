@@ -447,6 +447,7 @@ def build_store_kit(size, output, preview):
     # Product families use their own custom meshes and full-wrap authored artwork.
     # Print is UV-mapped onto package surfaces rather than mounted as separate label plates.
     product_objects, chilled_objects = build_merchandise(size)
+    generated_chilled_objects = list(chilled_objects)
     prebuilt = import_prebuilt_merchandise()
     if prebuilt is not None:
         # Keep the two established custom CENTS products; replace every other
@@ -458,15 +459,16 @@ def build_store_kit(size, output, preview):
         for obj in product_objects:
             if obj not in preserved and obj and obj.name in bpy.data.objects:
                 bpy.data.objects.remove(obj, do_unlink=True)
+        for chilled_product in generated_chilled_objects:
+            if chilled_product and chilled_product.name in bpy.data.objects:
+                bpy.data.objects.remove(chilled_product, do_unlink=True)
         product_objects = preserved + prebuilt[0]
         chilled_objects = prebuilt[1]
     parts.extend(product_objects)
     flush("ProductDisplays")
-    # The imported commercial coolers already include stocked shelves. Remove
-    # the legacy custom chilled SKUs from the Blender scene as well as from the
-    # export list; otherwise Blender's final select-all export would retain them.
+    # Remove legacy generated chilled stock when the prebuilt assortment is absent.
     if prebuilt is None:
-        for chilled_product in chilled_objects:
+        for chilled_product in generated_chilled_objects:
             if chilled_product and chilled_product.name in bpy.data.objects:
                 bpy.data.objects.remove(chilled_product, do_unlink=True)
 
