@@ -75,6 +75,7 @@ jobs:
           test -s build/district01/cents-material-identity-study.glb
           test -s build/district01/retail-store-kit.glb
           test -s build/district01/retail-store-kit-preview.png
+          test -s build/district01/retail-store-kit-preview-entrance.png
           test -s build/district01/cents-packaging-preview.png
           ls -lh build/district01/*.glb
 
@@ -111,6 +112,7 @@ jobs:
           path: |
             build/district01/*.glb
             build/district01/retail-store-kit-preview.png
+            build/district01/retail-store-kit-preview-entrance.png
             build/district01/cents-packaging-preview.png
           if-no-files-found: error
           retention-days: 7
