@@ -80,8 +80,17 @@ def place_fixture(path, label, center, yaw=0.0, target_height=None):
     root.location.y += center[1] - current.y
     root.location.z += center[2] - lo.z
     bpy.context.view_layer.update()
+    # CENTS currently reads node-local transforms rather than parent matrices.
+    # Bake the placed fixture hierarchy into world-space object transforms.
+    for obj in created:
+        world = obj.matrix_world.copy()
+        obj.parent = None
+        obj.matrix_world = world
+    bpy.data.objects.remove(root, do_unlink=True)
+    bpy.context.view_layer.update()
+    lo, hi = bounds(meshes)
     print("FIXTURE", label, "bounds", tuple(round(v, 3) for v in (hi - lo)), "meshes", len(meshes))
-    return root, created, meshes
+    return None, created, meshes
 
 
 def add_word(text, location, size, material, rotation=(math.pi / 2, 0, 0)):
@@ -144,16 +153,21 @@ def build_detailed_cooler_bank(size):
             part(prefix + "hinge barrel", (x - 0.385, front_y - 0.06, hinge_z), (0.07, 0.10, 0.19), stainless, 0.025)
         part(prefix + "top identity plaque", (x, front_y - 0.13, 2.94), (0.36, 0.018, 0.10), body, 0.018)
 
-        pivot = bpy.data.objects.new(prefix + "HINGE PIVOT - animate this node", None)
-        bpy.context.scene.collection.objects.link(pivot)
-        pivot.location = (x - 0.40, front_y - 0.097, 1.66)
-        pivot["cents_interaction"] = "cooler_door"
-        pivot["open_angle_degrees"] = 105.0
+        bpy.ops.object.select_all(action="DESELECT")
         for obj in door_parts:
-            world = obj.matrix_world.copy()
-            obj.parent = pivot
-            obj.matrix_world = world
-        print("COOLER", index, "door_parts", len(door_parts))
+            obj.select_set(True)
+        bpy.context.view_layer.objects.active = door_parts[0]
+        bpy.ops.object.join()
+        door = bpy.context.object
+        door.name = prefix + "HINGED GLASS DOOR ASSEMBLY"
+        hinge = (x - 0.40, front_y - 0.097, 1.66)
+        bpy.context.scene.cursor.location = hinge
+        bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+        door["cents_interaction"] = "cooler_door"
+        door["cents_hinge_origin"] = list(hinge)
+        door["cents_open_angle_degrees"] = 105.0
+        door["cents_door_id"] = "cooler-door-" + str(index)
+        print("COOLER", index, "hinged door mesh", len(door.data.polygons))
 
 
 def build(options):
