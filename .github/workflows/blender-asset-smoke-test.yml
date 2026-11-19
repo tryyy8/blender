@@ -74,7 +74,7 @@ jobs:
           npm install --global @gltf-transform/cli
           for model in build/retail-fixtures/*.glb; do
             decoded="${model%.glb}.decoded.glb"
-            gltf-transform copy "$model" "$decoded"
+            gltf-transform ktxdecompress "$model" "$decoded"
             mv "$decoded" "$model"
           done
           test -s build/retail-fixtures/grocery-shelf-run.glb
