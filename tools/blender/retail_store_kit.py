@@ -114,10 +114,19 @@ def build_empty_commercial_cooler(center_x, front_y, index, mats):
     width, depth, height = 1.18, 0.86, 2.12
     back_y = front_y + depth
     center_y = front_y + depth * 0.5
-    cube(prefix + "insulated cabinet", (center_x, center_y, height * 0.5),
-         (width, depth, height), shell, 0.055)
-    cube(prefix + "interior cavity", (center_x, front_y + 0.10, 1.10),
-         (width - 0.14, 0.025, 1.78), interior, 0.018)
+    # Five insulated cabinet panels form a real cavity; no solid front wall
+    # sits behind the transparent doors.
+    cube(prefix + "cabinet back", (center_x, back_y - 0.045, height * 0.5),
+         (width, 0.09, height), shell, 0.035)
+    for side in (-1, 1):
+        cube(prefix + "cabinet side", (center_x + side * (width * 0.5 - 0.045),
+             center_y, height * 0.5), (0.09, depth, height), shell, 0.035)
+    cube(prefix + "cabinet top", (center_x, center_y, height - 0.045),
+         (width, depth, 0.09), shell, 0.035)
+    cube(prefix + "cabinet bottom", (center_x, center_y, 0.045),
+         (width, depth, 0.09), shell, 0.035)
+    cube(prefix + "interior cavity back liner", (center_x, back_y - 0.095, 1.10),
+         (width - 0.18, 0.025, 1.78), interior, 0.012)
     for z in (0.19, 0.58, 0.97, 1.36, 1.75):
         cube(prefix + "adjustable empty shelf", (center_x, front_y + 0.31, z),
              (width - 0.18, 0.57, 0.035), metal, 0.012)
