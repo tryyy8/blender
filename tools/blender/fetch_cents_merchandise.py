@@ -137,7 +137,7 @@ def main():
     }
     with open(os.path.join(output, "manifest.json"), "w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2)
-        handle.write("\\n")
+        handle.write("\n")
     print("CURATED_SOURCE_MODELS={0}".format(len(selected)))
     print("PLACED_MERCHANDISE_INSTANCES={0}".format(len(manifest_products)))
     for product in selected:
