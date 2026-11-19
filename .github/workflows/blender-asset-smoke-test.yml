@@ -71,6 +71,12 @@ jobs:
           curl --fail --location --retry 4 --retry-all-errors \
             https://tevy.dev/models/checkout-counter/v2/lod0.glb \
             -o build/retail-fixtures/checkout-counter.glb
+          curl --fail --location --retry 4 --retry-all-errors \
+            https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-x86_64.deb \
+            -o /tmp/ktx-software.deb
+          sudo apt-get update
+          sudo apt-get install -y /tmp/ktx-software.deb
+          command -v ktx
           npm install --global @gltf-transform/cli
           for model in build/retail-fixtures/*.glb; do
             decoded="${model%.glb}.decoded.glb"
