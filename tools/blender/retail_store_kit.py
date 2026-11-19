@@ -27,7 +27,6 @@ def arguments():
     parser.add_argument("--output", required=True)
     parser.add_argument("--texture-size", type=int, default=256)
     parser.add_argument("--preview", default=None)
-    parser.add_argument("--cooler-asset", default=None)
     return parser.parse_args(argv)
 
 
@@ -107,53 +106,59 @@ def join_by_material(objects, label):
     return joined
 
 
-def import_cc0_beverage_cooler(filepath):
-    """Import and flatten one CC0 double-door commercial cooler at real-world scale."""
-    bpy.ops.import_scene.gltf(filepath=os.path.abspath(filepath))
-    imported = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
-    if not imported:
-        raise RuntimeError("The CC0 beverage cooler import produced no mesh objects.")
+def build_empty_commercial_cooler(center_x, front_y, index, mats):
+    """Build a stock-free double-door merchandiser with separately exported parts."""
+    prefix = "Cooler " + str(index + 1) + " - "
+    shell, interior, metal = mats["cooler_shell"], mats["cooler_interior"], mats["metal"]
+    glass, led = mats["cooler_glass"], mats["cooler_led"]
+    width, depth, height = 1.18, 0.86, 2.12
+    back_y = front_y + depth
+    center_y = front_y + depth * 0.5
+    cube(prefix + "insulated cabinet", (center_x, center_y, height * 0.5),
+         (width, depth, height), shell, 0.055)
+    cube(prefix + "interior cavity", (center_x, front_y + 0.10, 1.10),
+         (width - 0.14, 0.025, 1.78), interior, 0.018)
+    for z in (0.19, 0.58, 0.97, 1.36, 1.75):
+        cube(prefix + "adjustable empty shelf", (center_x, front_y + 0.31, z),
+             (width - 0.18, 0.57, 0.035), metal, 0.012)
+        cube(prefix + "shelf front price rail", (center_x, front_y + 0.015, z + 0.025),
+             (width - 0.20, 0.035, 0.045), shell, 0.008)
+    for side in (-1, 1):
+        cube(prefix + "interior LED diffuser", (center_x + side * (width * 0.5 - 0.085),
+             front_y + 0.09, 1.08), (0.025, 0.035, 1.82), led, 0.010)
+        door_x = center_x + side * 0.292
+        cube(prefix + ("left" if side < 0 else "right") + " glass door",
+             (door_x, front_y - 0.035, 1.08), (0.565, 0.045, 1.94), glass, 0.025)
+        for edge in (-1, 1):
+            cube(prefix + "door vertical aluminum frame",
+                 (door_x + edge * 0.274, front_y - 0.065, 1.08),
+                 (0.025, 0.065, 1.96), metal, 0.008)
+        cube(prefix + "door handle",
+             (door_x + (-0.22 if side < 0 else 0.22), front_y - 0.095, 1.08),
+             (0.035, 0.055, 0.48), metal, 0.012)
+    cube(prefix + "top compressor fascia", (center_x, front_y - 0.025, 2.035),
+         (width - 0.04, 0.12, 0.13), metal, 0.018)
+    cube(prefix + "lower vent grille", (center_x, front_y - 0.025, 0.105),
+         (width - 0.10, 0.10, 0.12), metal, 0.018)
+    for foot_x in (-0.45, 0.45):
+        for foot_y in (front_y + 0.12, back_y - 0.12):
+            cylinder(prefix + "leveling foot", (center_x + foot_x, foot_y, 0.035),
+                     0.035, 0.07, metal, vertices=20)
 
-    bpy.ops.object.select_all(action="DESELECT")
-    for obj in imported:
-        obj.select_set(True)
-    bpy.context.view_layer.objects.active = imported[0]
-    bpy.ops.object.join()
-    cooler = bpy.context.view_layer.objects.active
-    cooler.name = "CC0 double-door beverage cooler"
-    cooler.data.name = cooler.name + " mesh"
-
-    # Bake the imported hierarchy's world transforms before measuring or moving it.
-    cooler.data.transform(cooler.matrix_world.copy())
-    cooler.matrix_world.identity()
-    coords = [vertex.co.copy() for vertex in cooler.data.vertices]
-    minimum = Vector((min(v.x for v in coords), min(v.y for v in coords), min(v.z for v in coords)))
-    maximum = Vector((max(v.x for v in coords), max(v.y for v in coords), max(v.z for v in coords)))
-    dimensions = maximum - minimum
-    if min(dimensions) <= 0:
-        raise RuntimeError("The imported cooler has invalid dimensions: " + str(tuple(dimensions)))
-
-    # The source is authored at 1.2 x 0.787 x 2.0 m. Normalize only for
-    # harmless exporter/importer rounding; do not stretch the model.
-    scale = 2.0 / dimensions.z
-    source_center = (minimum + maximum) * 0.5
-    for vertex in cooler.data.vertices:
-        vertex.co = (vertex.co - source_center) * scale
-    cooler.location = (0, 0, 0)
-    cooler.data.update()
-    cooler["asset_source"] = "Innerscene double glass-door beverage cooler"
-    cooler["asset_license"] = "CC0 1.0"
-    return cooler
 
 
-def build_store_kit(size, output, preview, cooler_asset=None):
+def build_store_kit(size, output, preview):
     mats = {
         "plaster": make_material("Classic store warm ivory wall", "plaster", (0.82, 0.78, 0.69), 0.88, size=size),
         "paint": make_material("Retail painted accent", "painted", (0.13, 0.31, 0.29), 0.72, size=size),
         "wood": make_material("Checkout warm oak laminate", "wood", (0.48, 0.32, 0.20), 0.58, size=size),
         "metal": make_material("Retail powder coated metal", "metal", (0.12, 0.15, 0.15), 0.38, 0.52, size),
         "concrete": make_material("Classic light stone floor", "concrete", (0.58, 0.57, 0.52), 0.86, size=size),
-        "glass": make_glass("Retail refrigerator and storefront glass"),
+        "glass": make_glass("Retail storefront glass", (0.24, 0.34, 0.37), 0.08, 0.05, 0.34),
+        "cooler_glass": make_glass("Cooler clear tempered glass", (0.20, 0.29, 0.31), 0.06, 0.02, 0.22),
+        "cooler_shell": make_material("Cooler graphite enamel", "metal", (0.12, 0.15, 0.15), 0.28, 0.48, size),
+        "cooler_interior": make_material("Cooler deep charcoal interior", "painted", (0.035, 0.052, 0.050), 0.48, size=size),
+        "cooler_led": make_emissive("Cooler cool-white LED diffuser", (0.72, 0.88, 1.0)),
         "light": make_material("Retail warm ceiling finish", "painted", (0.91, 0.83, 0.66), 0.58, size=size),
         "packaging_a": make_material("Packaging coral", "painted", (0.73, 0.25, 0.16), 0.66, size=size),
         "packaging_b": make_material("Packaging ochre", "painted", (0.82, 0.59, 0.20), 0.66, size=size),
@@ -208,14 +213,27 @@ def build_store_kit(size, output, preview, cooler_asset=None):
     add("Entrance floor mat", (0, -5.02, 0.052), (2.75, 0.92, 0.045), entrance_mat, 0.025)
     add("Entrance mat edge", (0, -5.50, 0.055), (2.82, 0.035, 0.025), wall_trim, 0.008)
     add("Entrance header", (0, -5.88, 0.18), (3.2, 0.24, 0.36), mats["metal"], 0.018)
-    # Storefront glazing and a pair of framed entry leaves.
-    for x in (-4.55, -2.55, 2.55, 4.55):
-        add("Storefront glass panel", (x, -5.94, 2.0), (1.75, 0.055, 3.45), mats["glass"], 0.012)
-        add("Storefront mullion", (x - 0.91, -5.99, 2.0), (0.075, 0.12, 3.58), mats["metal"], 0.012)
-    for x in (-0.76, 0.76):
-        add("Double entry door leaf", (x, -5.96, 1.78), (0.70, 0.075, 3.18), mats["glass"], 0.012)
-        add("Door stile", (x + (0.31 if x < 0 else -0.31), -6.02, 1.78), (0.055, 0.10, 3.22), mats["metal"], 0.008)
-        add("Door pull", (x + (0.22 if x < 0 else -0.22), -6.10, 1.75), (0.035, 0.05, 0.46), mats["light"], 0.012)
+    # Fully framed storefront with fixed glazing and a clear double-door entrance.
+    storefront_y = -5.98
+    for x in (-4.12, -2.05, 2.05, 4.12):
+        add("Storefront fixed insulated glass", (x, storefront_y, 1.82),
+            (1.94, 0.045, 3.22), mats["glass"], 0.008)
+    for x in (-5.16, -3.08, -1.18, 0.0, 1.18, 3.08, 5.16):
+        add("Storefront structural aluminum mullion", (x, -6.035, 1.82),
+            (0.075, 0.13, 3.34), mats["metal"], 0.012)
+    add("Storefront continuous lower sill", (0, -6.035, 0.20),
+        (10.36, 0.13, 0.12), mats["metal"], 0.018)
+    add("Storefront continuous upper transom rail", (0, -6.035, 3.48),
+        (10.36, 0.13, 0.13), mats["metal"], 0.018)
+    for x in (-0.57, 0.57):
+        add("Double entry glass door leaf", (x, -6.055, 1.78),
+            (1.08, 0.055, 3.02), mats["glass"], 0.012)
+        add("Entry door outer stile", (x + (-0.51 if x < 0 else 0.51), -6.10, 1.78),
+            (0.055, 0.10, 3.10), mats["metal"], 0.008)
+        add("Entry door pull handle", (x + (0.34 if x < 0 else -0.34), -6.15, 1.78),
+            (0.035, 0.055, 0.52), mats["light"], 0.012)
+    add("Entrance reinforced jamb left", (-1.18, -6.04, 1.82), (0.10, 0.18, 3.36), mats["metal"], 0.012)
+    add("Entrance reinforced jamb right", (1.18, -6.04, 1.82), (0.10, 0.18, 3.36), mats["metal"], 0.012)
     # Continuous sign band and a shallow canopy profile.
     add("Exterior sign backing", (0, -6.18, 4.08), (7.2, 0.32, 0.48), mats["wood"], 0.035)
     add("Sign face", (0, -6.37, 4.08), (6.7, 0.035, 0.31), mats["light"], 0.012)
@@ -239,7 +257,8 @@ def build_store_kit(size, output, preview, cooler_asset=None):
         if side < 0:
             shelf_center_y, shelf_length, end_y = -0.35, 7.35, 3.325
         else:
-            shelf_center_y, shelf_length, end_y = 0.0, 8.6, 4.0
+            # Stop the right wall run behind the checkout zone.
+            shelf_center_y, shelf_length, end_y = 1.40, 5.20, 4.0
         for y in (-4.0, end_y):
             add("Wall shelf slim upright", (x, y, 0.96), (0.045, 0.060, 1.86), wall_finish, 0.012)
             for slot_z in range(10):
@@ -293,23 +312,11 @@ def build_store_kit(size, output, preview, cooler_asset=None):
                 (0.055, 0.08, 1.66), wall_finish, 0.018)
         flush("Gondola" + str(gondola_index))
 
-    # Three CC0 double-door commercial beverage coolers form one continuous
-    # conventional convenience-store cold-drink wall. Each imported cabinet is
-    # 1.2 m wide and 2.0 m tall; the source asset supplies the glass, doors,
-    # interior shelves, condenser grille and unbranded display stock.
-    if not cooler_asset or not os.path.isfile(cooler_asset):
-        raise RuntimeError("A downloaded CC0 cooler asset is required for the production store.")
-    cooler_template = import_cc0_beverage_cooler(cooler_asset)
+    # Purpose-built empty merchandisers; each functional component remains a
+    # separate GLB node for future stocking, lighting and door interaction.
     for index, cooler_x in enumerate((-5.55, -4.30, -3.05)):
-        if index == 0:
-            cooler_instance = cooler_template
-        else:
-            # Linked mesh instances share the 5.6 MB source geometry and textures.
-            cooler_instance = cooler_template.copy()
-            cooler_instance.data = cooler_template.data
-            bpy.context.collection.objects.link(cooler_instance)
-        cooler_instance.name = "CC0 commercial beverage cooler " + str(index + 1)
-        cooler_instance.location = (cooler_x, 5.36, 1.00)
+        build_empty_commercial_cooler(cooler_x, 4.94, index, mats)
+
 
     # Checkout island: customer side faces the entrance (-Y), cashier controls face
     # the operator side (+Y). The fixture has a layered counter, belt, scan well,
@@ -363,15 +370,7 @@ def build_store_kit(size, output, preview, cooler_asset=None):
     add("Impulse display base", (6.90, -3.52, 1.31), (0.42, 0.48, 0.08), mats["metal"], 0.020)
     flush("Checkout")
 
-    # Compact backroom partition and stock shelving behind the service zone.
-    add("Stockroom partition", (0, 5.0, 2.05), (4.4, 0.18, 4.1), mats["plaster"], 0.025)
-    add("Stockroom opening lintel", (0, 4.84, 3.65), (1.65, 0.20, 0.28), mats["paint"], 0.018)
-    for z in (0.48, 1.35, 2.22, 3.09):
-        add("Stockroom shelf", (-1.7, 5.42, z), (2.6, 0.70, 0.09), mats["wood"], 0.018)
-    # Keep the initial backroom clear until inventory cartons are authored as
-    # their own UV-mapped asset family; no coloured placeholder cubes are emitted.
-
-    flush("Stockroom")
+    # No stockroom partition: the rear wall remains a continuous open retail zone.
 
     # Product families use their own custom meshes and full-wrap authored artwork.
     # Print is UV-mapped onto package surfaces rather than mounted as separate label plates.
@@ -465,7 +464,7 @@ def main():
     options = arguments()
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
-    build_store_kit(options.texture_size, options.output, options.preview, options.cooler_asset)
+    build_store_kit(options.texture_size, options.output, options.preview)
 
 
 if __name__ == "__main__":
