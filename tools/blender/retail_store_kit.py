@@ -459,9 +459,10 @@ def build_store_kit(size, output, preview):
     # The imported commercial coolers already include stocked shelves. Remove
     # the legacy custom chilled SKUs from the Blender scene as well as from the
     # export list; otherwise Blender's final select-all export would retain them.
-    for chilled_product in chilled_objects:
-        if chilled_product and chilled_product.name in bpy.data.objects:
-            bpy.data.objects.remove(chilled_product, do_unlink=True)
+    if prebuilt is None:
+        for chilled_product in chilled_objects:
+            if chilled_product and chilled_product.name in bpy.data.objects:
+                bpy.data.objects.remove(chilled_product, do_unlink=True)
 
     # Distributed recessed LED panels: visible luminous diffusers, shallow housings,
     # satin bezels and serviceable end caps. All hardware clears the ceiling underside.
