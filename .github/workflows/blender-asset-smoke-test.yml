@@ -78,7 +78,7 @@ jobs:
             https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-x86_64.deb \
             -o /tmp/ktx-software.deb
           sudo apt-get update
-          sudo apt-get install -y /tmp/ktx-software.deb libegl1 libgl1 libegl1 libgl1
+          sudo apt-get install -y /tmp/ktx-software.deb libegl1 libgl1
           command -v ktx
           npm install --global @gltf-transform/cli
           for model in build/retail-fixtures/*.glb; do
