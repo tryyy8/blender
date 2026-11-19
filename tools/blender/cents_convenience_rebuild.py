@@ -250,12 +250,12 @@ def build(options):
         place_fixture(cooler_path, "Premade CC0 beverage cooler " + str(index), (x, 3.48, 0), 0.0, target_height=2.0)
 
     # Compact CC0 checkout fixture with integrated POS; no belt or supermarket bagging lane.
-    checkout_path = os.path.join(options.fixtures_dir, "checkout-counter-with-pos.glb")
-    place_fixture(checkout_path, "Premade compact cash-wrap checkout with POS", (3.15, -2.70, 0), math.pi / 2, target_height=1.22)
+    checkout_path = os.path.join(options.fixtures_dir, "shop-service-counter-with-till.glb")
+    place_fixture(checkout_path, "Premade compact cash-wrap counter with integrated till and POS", (3.45, -2.75, 0), 0.0, target_height=1.22)
 
     # Place the two retained authored products on the transaction surface as the store's initial stock.
-    products[0].location = (3.02, -2.78, 1.22)
-    products[1].location = (3.30, -2.78, 1.22)
+    products[0].location = (3.05, -2.75, 0.90)
+    products[1].location = (3.34, -2.75, 0.90)
 
     # Export the production scene without cameras/lights or any rejected old-store objects.
     bpy.ops.object.select_all(action="SELECT")
