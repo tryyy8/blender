@@ -95,6 +95,7 @@ def import_prebuilt_merchandise(manifest_path=DEFAULT_MANIFEST):
 
     imported_objects = []
     chilled_objects = []
+    prototype_cache = {}
     palettes = (
         ((0.12, 0.28, 0.25), (0.92, 0.58, 0.22)),
         ((0.18, 0.31, 0.42), (0.93, 0.80, 0.48)),
@@ -107,12 +108,32 @@ def import_prebuilt_merchandise(manifest_path=DEFAULT_MANIFEST):
         source = os.path.join(os.path.dirname(manifest_path), "models", entry["file"])
         if not os.path.isfile(source):
             raise FileNotFoundError("Curated merchandise model missing: " + source)
-        before = set(bpy.data.objects)
-        bpy.ops.import_scene.gltf(filepath=source)
-        created = [obj for obj in bpy.data.objects if obj not in before]
-        meshes = [obj for obj in created if obj.type == "MESH"]
-        if not meshes:
-            raise RuntimeError("No mesh objects imported for " + entry["sku"])
+        # Import each unique scan once. The shelf manifest intentionally reuses
+        # a small curated product library; re-importing the same GLB for every
+        # facing multiplies Blender object creation and render cost needlessly.
+        if entry["file"] not in prototype_cache:
+            before = set(bpy.data.objects)
+            bpy.ops.import_scene.gltf(filepath=source)
+            imported = [obj for obj in bpy.data.objects if obj not in before]
+            source_meshes = [obj for obj in imported if obj.type == "MESH"]
+            if not source_meshes:
+                raise RuntimeError("No mesh objects imported for " + entry["sku"])
+            prototypes = [
+                (obj.data.copy(), obj.matrix_world.copy(), obj.name)
+                for obj in source_meshes
+            ]
+            for obj in imported:
+                bpy.data.objects.remove(obj, do_unlink=True)
+            prototype_cache[entry["file"]] = prototypes
+
+        created = []
+        meshes = []
+        for mesh_data, world_matrix, source_name in prototype_cache[entry["file"]]:
+            obj = bpy.data.objects.new(source_name + " - CENTS instance", mesh_data.copy())
+            bpy.context.scene.collection.objects.link(obj)
+            obj.matrix_world = world_matrix.copy()
+            created.append(obj)
+            meshes.append(obj)
 
         # Strip all source material textures so scanned third-party logos and packaging
         # artwork cannot survive into CENTS. Keep the real product geometry.
