@@ -256,11 +256,17 @@ def build_store_kit(size, output, preview):
     add("CENTS storefront sign fascia", (0, -6.49, 3.20), (7.65, 0.22, 0.66), sign_back, 0.075)
     add("CENTS sign inset brass border", (0, -6.615, 3.20), (7.30, 0.025, 0.46), mats["light"], 0.035)
     add("CENTS sign face", (0, -6.635, 3.20), (7.18, 0.025, 0.39), sign_back, 0.025)
-    # Lettering is modeled as raised, individually legible blocks rather than a flat decal.
-    def sign_glyph(name, x, width, z=3.20):
-        add(name, (x, -6.665, z), (width, 0.035, 0.205), sign_gold, 0.012)
-    for letter_x, letter_w in ((-1.02,0.30),(-0.65,0.23),(-0.31,0.29),(0.08,0.28),(0.45,0.27)):
-        sign_glyph("CENTS illuminated sign letter", letter_x, letter_w)
+    # Raised typographic wordmark, readable from the parking-lot approach.
+    bpy.ops.object.text_add(location=(0.0, -6.675, 3.20), rotation=(math.pi / 2, 0.0, 0.0))
+    cents_wordmark = bpy.context.object
+    cents_wordmark.name = "CENTS illuminated storefront wordmark"
+    cents_wordmark.data.body = "CENTS"
+    cents_wordmark.data.align_x = "CENTER"
+    cents_wordmark.data.align_y = "CENTER"
+    cents_wordmark.data.size = 0.43
+    cents_wordmark.data.extrude = 0.008
+    cents_wordmark.data.bevel_depth = 0.002
+    cents_wordmark.data.materials.append(sign_gold)
     add("Storefront opening hours plaque", (3.25, -6.50, 2.82), (1.02, 0.08, 0.34), sign_back, 0.025)
     add("Storefront opening hours lettering", (3.25, -6.55, 2.83), (0.78, 0.018, 0.055), sign_ivory, 0.008)
 
@@ -350,7 +356,7 @@ def build_store_kit(size, output, preview):
         add(name + " lettering", (center[0], center[1] - 0.063, center[2]), (title_width, 0.012, 0.055), category_text, 0.008)
     department_sign("Cold drinks department", (-4.30, 5.18, 3.28), (3.45, 0.16, 0.36), 1.35)
     department_sign("Snacks and pantry department", (0.0, 3.62, 2.30), (4.20, 0.14, 0.34), 1.78)
-    department_sign("Everyday essentials department", (7.62, 1.20, 2.70), (0.15, 3.10, 0.34), 1.48)
+    department_sign("Everyday essentials department", (4.20, 5.28, 2.70), (3.35, 0.14, 0.34), 1.48)
 
     # A compact coffee and hot-drink station belongs beside the rear counter zone.
     coffee_shell = make_material("Coffee station graphite enamel", "metal", (0.105, 0.125, 0.12), 0.30, 0.62, size)
