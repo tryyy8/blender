@@ -207,7 +207,10 @@ def build(options):
     add("Entry threshold", (0, -4.5, 0.035), (2.2, 0.36, 0.07), brass, 0.018)
     add("Sign inset", (0, -4.79, 3.78), (6.8, 0.035, 0.38), dark, 0.025)
     add_word("CENTS", (0, -4.82, 3.78), 0.43, glow)
-    add("Ceiling", (0, 0, 4.24), (12, 9, 0.20), ceiling, 0.025)
+    ceiling_obj = add("Ceiling", (0, 0, 4.24), (12, 9, 0.20), ceiling, 0.025)
+    # Keep the roof as its own export node so preview renders can hide it without
+    # hiding the entire shell or blocking all interior lighting.
+    parts.remove(ceiling_obj)
     # Restrained wall bands and baseboards give the room a finished retail fit-out.
     add("Rear wall baseboard", (0, 4.22, 0.14), (11.7, 0.06, 0.20), dark, 0.01)
     add("Rear wall brand band", (0, 4.22, 2.72), (11.7, 0.06, 0.16), dark, 0.01)
@@ -261,8 +264,8 @@ def build(options):
     add("Coffee station header", (-4.65, 2.30, 2.05), (1.78, 0.12, 0.30), dark, 0.025)
 
     # Store department signs: restrained and legible, not a supermarket-sized aisle system.
-    add("Cold drinks wall sign", (3.5, 4.20, 3.15), (3.0, 0.08, 0.32), dark, 0.025)
-    add_word("COLD DRINKS", (3.5, 4.14, 3.15), 0.16, glow)
+    add("Cold drinks wall sign", (-2.9, 4.20, 3.15), (3.0, 0.08, 0.32), dark, 0.025)
+    add_word("COLD DRINKS", (-2.9, 4.14, 3.15), 0.16, glow)
     add("Snacks and pantry sign", (0, 4.20, 3.45), (3.1, 0.08, 0.30), dark, 0.025)
     add_word("SNACKS  •  PANTRY", (0, 4.14, 3.45), 0.15, glow)
 
@@ -278,6 +281,8 @@ def build(options):
     )
     print("CENTS redesigned convenience store exported:", os.path.abspath(options.output))
 
+    # Keep the roof in the exported GLB but hide it for the two interior review renders.
+    ceiling_obj.hide_render = True
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
@@ -310,10 +315,6 @@ def build(options):
         light.rotation_euler = (target - light.location).to_track_quat("-Z", "Y").to_euler()
 
     # Review renders must expose the interior rather than photograph the opaque roof.
-    roof = bpy.data.objects.get("Ceiling")
-    if roof:
-        roof.hide_render = True
-
     # First view: standing just inside the entrance, looking down the shopping floor.
     bpy.ops.object.camera_add(location=(0.0, -3.65, 2.05))
     interior_cam = bpy.context.object
