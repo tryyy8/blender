@@ -177,7 +177,7 @@ def build(options):
     coffee station, signage and supermarket-style checkout are deliberately not
     emitted. They were the rejected previous store, not reusable store assets.
     """
-    bpy.ops.object.select_all(action="SELECT)
+    bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     size = options.texture_size
 
