@@ -92,10 +92,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp -a assets/merchandise "$RUNNER_TEMP/cents-merchandise"\n          for attempt in 1 2 3 4 5; do
+          cp -a assets/merchandise "$RUNNER_TEMP/cents-merchandise"
+          for attempt in 1 2 3 4 5; do
             git fetch origin main
             git reset --hard origin/main
             mkdir -p assets
+            cp -a "$RUNNER_TEMP/cents-merchandise" assets/merchandise
             cp build/district01/district01-commercial-building.glb assets/district01-commercial-building.glb
             cp build/district01/cents-material-identity-study.glb assets/cents-material-identity-study.glb
             cp build/district01/retail-store-kit.glb assets/retail-store-kit.glb
@@ -122,6 +124,10 @@ jobs:
             build/district01/*.glb
             build/district01/retail-store-kit-preview.png
             build/district01/retail-store-kit-preview-entrance.png
-            build/district01/cents-packaging-preview.png\n            assets/merchandise/manifest.json\n            assets/merchandise/models/*.glb\n            assets/merchandise/manifest.json\n            assets/merchandise/models/*.glb
+            build/district01/cents-packaging-preview.png
+            assets/merchandise/manifest.json
+            assets/merchandise/models/*.glb
+            assets/merchandise/manifest.json
+            assets/merchandise/models/*.glb
           if-no-files-found: error
           retention-days: 7
