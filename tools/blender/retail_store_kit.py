@@ -19,6 +19,7 @@ if SCRIPT_DIR not in sys.path:
 
 from cents_materials import material_family
 from cents_packaging import build_merchandise
+from cents_prebuilt_merchandise import import_prebuilt_merchandise
 
 
 def arguments():
@@ -440,6 +441,19 @@ def build_store_kit(size, output, preview):
     # Product families use their own custom meshes and full-wrap authored artwork.
     # Print is UV-mapped onto package surfaces rather than mounted as separate label plates.
     product_objects, chilled_objects = build_merchandise(size)
+    prebuilt = import_prebuilt_merchandise()
+    if prebuilt is not None:
+        # Keep the two established custom CENTS products; replace every other
+        # generated placeholder SKU with the curated prebuilt GLB assortment.
+        preserved = [
+            obj for obj in product_objects
+            if "EMBER COLA CAN" in obj.name or "DELI FRESH PASTA CUP" in obj.name
+        ]
+        for obj in product_objects:
+            if obj not in preserved and obj and obj.name in bpy.data.objects:
+                bpy.data.objects.remove(obj, do_unlink=True)
+        product_objects = preserved + prebuilt[0]
+        chilled_objects = prebuilt[1]
     parts.extend(product_objects)
     flush("ProductDisplays")
     # The imported commercial coolers already include stocked shelves. Remove
