@@ -213,7 +213,7 @@ def build_new_store_shell(size):
         cube("CENTS NEW STORE ceiling light diffuser", (x, 0.15, 3.485), (1.20, 0.25, 0.025), light, 0.012)
 
     sign = make_material("CENTS new store sign lettering", "painted", (0.96, 0.87, 0.66), 0.42, size=size)
-    add_word("CENTS", (0, -4.545, 3.34), 0.34, sign)
+    add_word("CENTS", (0, -4.285, 3.34), 0.34, sign, rotation=(-math.pi / 2, 0, 0))
     return {"floor": floor, "wall": wall, "accent": accent, "dark": dark, "wood": wood, "glass": glass}
 
 
